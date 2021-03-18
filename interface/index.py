@@ -1,16 +1,22 @@
 
 import matplotlib.pyplot as plt
-import mview as mview
+
 from dash.dependencies import Input, Output, State
 from app import app
 from layout import MPSELayout
 from dataset import MPSEDataset
 from dash import callback_context
 import dash
+from vissettings import VIS
 import plotly.express as px
 from dash.exceptions import PreventUpdate
-app.title = 'MPSE - TSNE'
 
+
+import sys
+sys.path.insert(0,'../') 
+import mview 
+
+app.title = 'MPSE - TSNE'
 
 class MPSETSNE:
     def __init__(self, app):
@@ -62,7 +68,7 @@ class MPSETSNE:
 
             if smart_initialization!='True':
                 smart_initialization=None 
-                
+
 
             if dataset == "credit" and trigger["prop_id"] == "run-button.n_clicks":
                 D, labels = MPSEDataset("").read_credit_card_data()
@@ -106,26 +112,7 @@ class MPSETSNE:
         fig = px.scatter_3d(df, x='x', y='y', z='z', symbol='CODE_GENDER',
                             size_max=40, color='NAME_EDUCATION_TYPE', size='AMT_INCOME_TOTAL')
         fig.update_layout(scene_camera=camera)
-        fig.update_layout(scene=dict(
-            xaxis=dict(
-                autorange=True,
-                backgroundcolor="rgb(200, 200, 230)",
-                ticks='',
-                showticklabels=False
-            ),
-            yaxis=dict(
-                autorange=True,
-                backgroundcolor="rgb(230, 200,230)",
-                ticks='',
-                showticklabels=False
-            ),
-            zaxis=dict(
-                autorange=True,
-                backgroundcolor="rgb(230, 230,200)",
-                ticks='',
-                showticklabels=False
-            ),
-        ))
+        fig.update_layout(scene=VIS.scene)
         return fig
  
 
