@@ -3,19 +3,19 @@ class VIS:
         self.scene=dict(
                 xaxis=dict(
                     autorange=True,
-                    backgroundcolor="rgb(200, 200, 230)",
+                    backgroundcolor="rgb(116, 119, 156)",
                     ticks='',
                     showticklabels=False
                 ),
                 yaxis=dict(
                     autorange=True,
-                    backgroundcolor="rgb(230, 200,230)",
+                    backgroundcolor="rgb(153, 116, 156)",
                     ticks='',
                     showticklabels=False
                 ),
                 zaxis=dict(
                     autorange=True,
-                    backgroundcolor="rgb(230, 230,200)",
+                    backgroundcolor="rgb(156, 133, 116)",
                     ticks='',
                     showticklabels=False
                 ),

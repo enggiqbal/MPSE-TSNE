@@ -3,7 +3,7 @@ import gensim.downloader as api
 from gensim.models import KeyedVectors
 import numpy as np
 class MPSEDataset:
-    def __init__(self, name):
+    def __init__(self):
         super().__init__() 
         self.path='../datasets/credit/'
         self.wv_from_bin = self.load_word2vec()
@@ -19,12 +19,29 @@ class MPSEDataset:
         D = [pd.read_csv(f, header=None).values for f in files]
         return D
     def get_distance_matrics(self, w1, w2, ntop=10):
+        if w1 not in self.wv_from_bin.vocab.keys():
+            return (None, f"{w1} is not in the vocabulary")
+        if w2 not in self.wv_from_bin.vocab.keys():
+            return (None, f"{w2} is not in the vocabulary")
+            
+
         words=self.get_data_wordlist( w1, w2,ntop)
         w1w0=self.wv_from_bin.distance(w1, w2)
         allwords=list(set(words[0]| words[1]))
         m1=self.get_custom_pariwise_distances(w1w0,words[0],allwords)
         m2=self.get_custom_pariwise_distances(w1w0,words[1],allwords)
-        return ([m1, m2], allwords)
+        source=[]
+        for w in allwords:
+            if w in words[0] and w in words[1]:
+                source.append("both")
+                continue 
+            if w in words[0]:
+                source.append(w1)
+            else:
+                source.append(w2)
+
+
+        return ([m1, m2], {"allwords":allwords,"source":source})
 
 
     def get_custom_pariwise_distances(self, w0w1, words,allwords ):
@@ -57,6 +74,6 @@ class MPSEDataset:
         return wv_from_bin
 
 if __name__=='__main__':
-    d=MPSEDataset("")
+    d=MPSEDataset()
     d.get_distance_matrics('love', 'hate')
     print(d)
