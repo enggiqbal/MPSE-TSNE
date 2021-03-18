@@ -80,16 +80,18 @@ class MPSETSNE:
                 self.X = mv.X
                 self.Q = mv.Q
                 self.cost = mv.H[0]['costs']
+                self.info=f"Proj1: {mv.individual_cost[0]:0.3f}, Proj2: {mv.individual_cost[1]:0.3f}, Proj3: {mv.individual_cost[2]:0.3f} "
+                # import pdb; pdb.set_trace()
                 self.cost_fig = px.line(
                     x=range(0, len(self.cost)), y=self.cost)
                 self.mainfig = self.get_chart_fig(mv.X, labels)
                 # mv.plot_images()
                 # plt.savefig("mpse-tsne_image.png")
 
-            return ["", self.mainfig, self.cost_fig]
+            return [self.info, self.mainfig, self.cost_fig]
 
     def get_viewpoint_from_projection(self, i):
-        constant = 1
+        constant =3
         a = self.Q[i][0]
         b = self.Q[i][1]
         p = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] -
@@ -112,7 +114,7 @@ class MPSETSNE:
         fig = px.scatter_3d(df, x='x', y='y', z='z', symbol='CODE_GENDER',
                             size_max=40, color='NAME_EDUCATION_TYPE', size='AMT_INCOME_TOTAL')
         fig.update_layout(scene_camera=camera)
-        fig.update_layout(scene=VIS.scene)
+        fig.update_layout(scene=VIS().scene)
         return fig
  
 
