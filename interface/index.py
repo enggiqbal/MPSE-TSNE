@@ -24,6 +24,7 @@ class MPSETSNE:
         self.dataset = None
         self.layout = MPSELayout(app).layout
         self.X = []
+        self.MPSEDataset=MPSEDataset("")
 
     def run_server(self, port=8084):
         if self.app is not None and hasattr(self, 'callbacks'):
@@ -49,10 +50,11 @@ class MPSETSNE:
                 State('projection', 'value'),
                 State('visualization_method','value'),
                 State('max_iters','value'),
-                State('smart_initialization','value')
+                State('smart_initialization','value'),
+                State('inputwords','value')
             ]
         )
-        def run(n_clicks, proj1, proj2, proj3, dataset, perplexity, projection,visualization_method_name,max_iters,smart_initialization):
+        def run(n_clicks, proj1, proj2, proj3, dataset, perplexity, projection,visualization_method_name,max_iters,smart_initialization,inputwords):
 
             trigger = callback_context.triggered[0]
             if trigger["prop_id"] == ".":
@@ -60,10 +62,13 @@ class MPSETSNE:
             
 
             if 'proj' in trigger["prop_id"]:
+              
                 if len(self.X) == 0:
                     return ["Please run first.", {}, {}]
-                camera = dict(eye=self.get_viewpoint_from_projection(
-                    int(trigger["prop_id"].replace("proj", "").replace(".n_clicks", "")) - 1))
+                clicked=int(trigger["prop_id"].replace("proj", "").replace(".n_clicks", "")) - 1
+                if self.nprojections==2 and clicked==2:
+                    raise PreventUpdate
+                camera = dict(eye=self.get_viewpoint_from_projection(  clicked  ) )
                 self.mainfig = self.mainfig.update_layout(scene_camera=camera)
 
             if smart_initialization!='True':
@@ -71,24 +76,35 @@ class MPSETSNE:
 
 
             if dataset == "credit" and trigger["prop_id"] == "run-button.n_clicks":
-                D, labels = MPSEDataset("").read_credit_card_data()
-                
-                if projection == 'variable':
-                    mv = mview.basic(D,  verbose=2, visualization_args={   'perplexity': perplexity},  max_iter=max_iters,  visualization_method=visualization_method_name)
-                else:
-                    mv = mview.basic(D, fixed_projections=projection, verbose=2, visualization_args={'perplexity': perplexity},  max_iter=max_iters, smart_initialization=smart_initialization, visualization_method = visualization_method_name)
-                self.X = mv.X
-                self.Q = mv.Q
-                self.cost = mv.H[0]['costs']
-                self.info=f"Proj1: {mv.individual_cost[0]:0.3f}, Proj2: {mv.individual_cost[1]:0.3f}, Proj3: {mv.individual_cost[2]:0.3f} "
-                # import pdb; pdb.set_trace()
-                self.cost_fig = px.line(
-                    x=range(0, len(self.cost)), y=self.cost)
-                self.mainfig = self.get_chart_fig(mv.X, labels)
+                D, labels = self.MPSEDataset.read_credit_card_data()
+                self.get_mview(projection,D,perplexity,max_iters,visualization_method_name,smart_initialization)
+                self.mainfig = self.get_chart_fig(self.X, labels)
                 # mv.plot_images()
                 # plt.savefig("mpse-tsne_image.png")
 
+            if dataset=='news' and   trigger["prop_id"] == "run-button.n_clicks":
+                w1=inputwords.split(",")[0].strip() 
+                w2=inputwords.split(",")[1].strip() 
+                D,labels=self.MPSEDataset.get_distance_matrics(w1, w2,50)
+                self.get_mview(projection,D,perplexity,max_iters,visualization_method_name,smart_initialization)
+                self.mainfig = self.get_chart_fig_news( labels)
             return [self.info, self.mainfig, self.cost_fig]
+
+    def get_mview(self,projection,D,perplexity,max_iters,visualization_method_name,smart_initialization):
+            if projection == 'variable':
+                mv = mview.basic(D,  verbose=2, visualization_args={   'perplexity': perplexity},  max_iter=max_iters,  visualization_method=visualization_method_name)
+            else:
+                mv = mview.basic(D, fixed_projections=projection, verbose=2, visualization_args={'perplexity': perplexity},  max_iter=max_iters, smart_initialization=smart_initialization, visualization_method = visualization_method_name)
+            self.X = mv.X
+            self.Q = mv.Q
+            self.nprojections=len(mv.individual_cost)
+            self.cost = mv.H[0]['costs']
+            self.info=f"Proj1: {mv.individual_cost[0]:0.3f}, Proj2: {mv.individual_cost[1]:0.3f}"
+            if self.nprojections==3:
+               self.info=self.info + f"Proj3: {mv.individual_cost[2]:0.3f} "
+            self.cost_fig = px.line(
+                x=range(0, len(self.cost)), y=self.cost)
+            
 
     def get_viewpoint_from_projection(self, i):
         constant =3
@@ -97,6 +113,13 @@ class MPSETSNE:
         p = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] -
              a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
         return dict(x=p[0] * constant, y=p[1] * constant, z=p[2] * constant)
+    def get_chart_fig_news(self, label):
+        camera = dict(eye=self.get_viewpoint_from_projection(1))
+        fig = px.scatter_3d( x=self.X.T[0], y=self.X.T[1], z=self.X.T[2], text=label  )
+        fig.update_layout(scene_camera=camera)
+        fig.update_layout(scene=VIS().scene)
+        return fig
+
 
     def get_chart_fig(self, X, df):
         df["x"] = X.T[0]
