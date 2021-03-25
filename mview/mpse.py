@@ -1,9 +1,13 @@
-import sys
+import os, sys
+directory = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(1, directory)
+
 import numbers, math, random
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.spatial.distance
+from scipy.spatial.distance import squareform
 
 import misc, setup, multigraph, gd, projections, mds, tsne, plots
 
@@ -20,8 +24,8 @@ class MPSE(object):
                  embedding_dimension=3, image_dimension=2,
                  projection_family='linear',projection_constraint='orthogonal',
                  hidden_samples=None,
-                 sample_labels=None, sample_colors=None, image_colors=None,
-                 perspective_labels=None,
+                 sample_labels=None, perspective_labels=None,
+                 sample_colors=None, image_colors=None,
                  verbose=0, indent='',
                  **kwargs):
         """\
@@ -63,7 +67,7 @@ class MPSE(object):
 
         fixed_projections : list
         If a list is given, this is assumed to be the true projections and by
-        defulat optimization is done w.r.t. the embedding coordinates only.
+        default optimization is done w.r.t. the embedding coordinates only.
 
         initial_embedding : array
         If given, this is the initial embedding used.
@@ -162,11 +166,8 @@ class MPSE(object):
             print(indent+f'    image dimension : {self.image_dimension}')
             print(indent+f'    visualization type : {visualization_method}')
 
-        ##setup labels and colors:
         #setup sample labels:
-        if sample_labels is None:
-            sample_labels = range(1,self.n_samples+1)
-        else:
+        if sample_labels is not None:
             assert len(sample_labels) == self.n_samples
         self.sample_labels = sample_labels
         #setup perspective labels:
@@ -175,13 +176,11 @@ class MPSE(object):
         else:
             assert len(perspective_labels) == self.n_perspectives
         self.perspective_labels = perspective_labels
-        #setup sample colors:
+        
+        #setup colors:
         self.sample_colors = sample_colors
-        #setup image colors:
-        if image_colors is not None:
-            assert len(image_colors) == self.n_perspectives
         self.image_colors = image_colors
-            
+
         #setup visualization instances:
         self.visualization_instances = []
         self.visualization_method = visualization_method
@@ -194,13 +193,13 @@ class MPSE(object):
             if self.verbose > 0:
                 print('  setup visualization instance for perspective',
                       self.perspective_labels[i],':')
-            if visualization_method[i] == 'mds':
+            if visualization_method[i] is 'mds':
                 vis = mds.MDS(self.distances[i],
                               weights = self.weights[i],
                               embedding_dimension=self.image_dimension,
                               verbose=self.verbose, indent=self.indent+'    ',
                               **visualization_args[i])
-            elif visualization_method[i] == 'tsne':
+            elif visualization_method[i] is 'tsne':
                 vis = tsne.TSNE(self.distances[i],
                                 embedding_dimension=self.image_dimension,
                                 verbose=self.verbose, indent=self.indent+'    ',
@@ -444,14 +443,15 @@ class MPSE(object):
                     lr = 0.01
                 else:
                     lr = [1,0.01]
-            else:
-                assert self.visualization_method == 'tsne'
+            elif self.visualization_method == 'tsne':
                 if fixed_projections:
                     lr = 100
                 elif fixed_embedding:
                     lr = 10
                 else:
                     lr = [100,10]
+            else:
+                lr = [1,1]
                 
         if self.verbose > 0:
             print(self.indent+'  MPSE.gd():')
@@ -547,6 +547,15 @@ class MPSE(object):
             print(self.indent+f'    final cost : {self.cost:0.2f}')
             costs = ', '.join(f'{x:0.2f}' for x in self.individual_cost)
             print(self.indent+f'    individual costs : {costs}')
+
+    def optimized(self, iters=[40,40,40,100], **kwargs):
+        "find optimal solution"
+        if self.verbose > 0:
+            print(self.indent+'  MPSE.optimized():')
+        self.gd(batch_size=self.n_samples//20, max_iter=iters[0], scheme='mm')
+        self.gd(batch_size=self.n_samples//10, max_iter=iters[1], scheme='mm')
+        self.gd(batch_size=self.n_samples//5, max_iter=iters[2], scheme='mm')
+        self.gd(max_iter=iters[3],scheme='bb')
  
     def plot_embedding(self,title=None,perspectives=True,edges=None,colors=True,
                 plot=True,ax=None,**kwargs):
@@ -563,33 +572,15 @@ class MPSE(object):
         if edges is not None:
             if isinstance(edges,numbers.Number):
                 edges = edges-self.D
+                
         if colors is True:
             colors = self.sample_colors
+        if isinstance(colors, int):
+            assert colors in range(self.n_samples)
+            colors = squareform(self.distances[0])[colors]
+            
         plots.plot3D(self.embedding,perspectives=perspectives,edges=edges,
                      colors=colors,title=title,ax=ax,**kwargs)
-
-    def plot_image(self,index,title='embedding',edges=False,colors='default',
-                       labels=None,
-                       axis=True,plot=True,
-                       ax=None,**kwargs):
-        assert self.image_dimension >= 2
-        if edges is True:
-            edges = self.distances['edge_list']
-        elif edges is False:
-            edges = None
-        if colors == 'default':
-            colors = self.sample_colors
-
-        if self.image_dimension == 2:
-            plots.plot2D(self.images[index],edges=edges,colors=colors,
-                         labels=labels,
-                         axis=axis,ax=ax,title=title,**kwargs)
-        else:
-            plots.plot3D(self.X,edges=edges,colors=colors,title=title,
-                         ax=ax,**kwargs)
-        if plot is True:
-            plt.draw()
-            plt.pause(1)
 
     def plot_images(self,title=None,edges=None,
                 colors=True,plot=True,
@@ -604,20 +595,26 @@ class MPSE(object):
             edges = [None]*self.n_perspectives
         else:
             edges = edges
+
+        #setup colors
+        if colors is True:
+            colors = self.image_colors
+        if colors is None:
+            colors = self.sample_colors
             
         for k in range(self.n_perspectives):
-            if colors is True:
-                if self.image_colors is None:
-                    colors_k = [0]+list(self.distances[k][0:self.n_samples-1])
-                else:
-                    colors_k = self.image_colors[k]
-            elif colors is False:
-                colors_k = None
+
+            if isinstance(colors,list) and len(colors)==self.n_perspectives:
+                colors_k = colors[k]
             else:
                 colors_k = colors
+            if isinstance(colors_k, int):
+                assert colors_k in range(self.n_samples)
+                colors_k = scipy.spatial.distance.squareform(self.distances[k])[colors_k]
+
             plots.plot2D(self.images[k],edges=edges[k],colors=colors_k,ax=ax[k],
                     weight=self.weights[k], **kwargs)
-            ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
+            #ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
         plt.suptitle(title)
         if plot is True:
             plt.draw()
@@ -718,82 +715,134 @@ class MPSE(object):
         if plot is True:
             plt.draw()
             plt.pause(0.2)
+
+    def save(self):
+        "save results to csv files"
+        location=directory+'/temp/'
+        if not os.path.exists(location):
+            os.makedirs(location)
+            
+        np.savetxt(location+'embedding.csv', self.embedding)
+        for i in range(self.n_perspectives):
+            np.savetxt(location+'projection_'+str(i)+'.csv',
+                       self.projections[i])
+            np.savetxt(location+'images_'+str(i)+'.csv',
+                       self.images[i])
+        if self.sample_labels is not None:
+            np.savetxt(location+'sample_labels.csv', self.sample_labels,
+                       fmt='%d')
+
+def mpse_tsne(data, perplexity=30, iters=[10,10,10,100],
+              verbose=2, show_plots=True, save_results = False,**kwargs):
+    "Runs MPSE optimized for tsne"
+    
+    #load data
+    if isinstance(data,str):
+        import samples
+        kwargs0 = kwargs
+        distances, kwargs = samples.mload(data, verbose=verbose, **kwargs0)
+        for key, value in kwargs0.items():
+            kwargs[key] = value
+        
+    #start MPSE object
+    mv =  MPSE(distances, visualization_method='tsne',
+               visualization_args={'perplexity':perplexity}, verbose=verbose,
+               indent='  ', **kwargs)
+    n_samples = mv.n_samples
+
+    #search for global minima
+    if isinstance(iters,int):
+        iters = [20,20,iters]
+    elif len(iters)==1:
+        iters = [20,20,iters[0]]
+    elif len(iters)==2:
+        iters = [20,iters[0],iters[1]]
+    mv.gd(fixed_projections=True, max_iter=iters[0], scheme='bb')
+    for i, its in enumerate(iters[1:-1]):
+        batch_size = min(100//(2**i),n_samples//(2**i))
+        mv.gd(batch_size=batch_size, max_iter=its, scheme='mm')     
+    mv.gd(max_iter=iters[-1], scheme='bb', **kwargs)
+        
+    #save outputs:
+    if save_results is True:
+        mv.save()
+
+    if show_plots is True:
+        mv.plot_computations()
+        mv.plot_embedding(title='solution')
+        mv.plot_images(title='solution', **kwargs)
+        plt.show()
+    return mv
+    
     
 ##### TESTS #####
 
-def basic(example='123', n_samples=1000,
-          fixed_projections=False, fixed_embedding=False,
-          visualization_method='mds', smart_initialization=False, **kwargs):
-
-    sample_colors = None
-    image_colors = None
-    edges = None
-    labels = None
+def basic(dataset='disk', fixed_projections=False,
+             smart_initialization=True,
+             verbose=2, **kwargs):
     import samples
-    if example == 'disk':
-        Y, X, Q = samples.disk(n_samples)
-    if example == '123':
-        Y, X, Q = samples.e123()
-    if example == 'cluster':
-        Y, image_colors = samples.cluster()
-    if example == 'florence':
-        dict = samples.florence()
-        Y = dict['data']
-        labels = dict['labels']
-        edges = dict['edges']
-    if example == 'credit':
-        Y = samples.credit()
-    if example == 'phishing':
-        Y, sample_colors, plabels = \
-            samples.phishing(groups=[0,1,3], n_samples=200)
-        #image_colors = [sample_colors]*len(Y)
-    if example == 'mnist':
-        X, sample_colors = samples.mnist()
-        Y = [X[:,0:28*14],X[:,28*14::]]
-        image_colors = [sample_colors, sample_colors]
+    data = samples.mload(dataset, **kwargs)
     if fixed_projections:
-        mv = MPSE(Y,Q=Q,visualization_method=visualization_method,verbose=2,
-                  **kwargs)
-    elif fixed_embedding:
-        mv = MPSE(Y,X=X,visualization_method=visualization_method,verbose=2,
-                  **kwargs)
+        mv = MPSE(data['D'],fixed_projections=data['Q'],verbose=verbose,
+                  colors=data['colors'],
+                  sample_labels = data['sample_labels'],
+                  image_colors=data['image_colors'],**kwargs)
     else:
-        mv = MPSE(Y,visualization_method=visualization_method,verbose=2,
+        mv = MPSE(data['D'],verbose=verbose,colors=data['colors'],
+                  image_colors=data['image_colors'],
+                  sample_labels=data['sample_labels'],
                   **kwargs)
-    mv.image_colors = image_colors
-    mv.sample_colors = sample_colors
-
-    mv.plot_embedding(title='initial embedding')
-
-    if smart_initialization and fixed_projections is False and \
-       fixed_embedding is False:
+    
+    if smart_initialization and fixed_projections is False:
         mv.smart_initialize()
         mv.plot_embedding(title='smart initialize')
+        mv.plot_images(title='smart init')
 
     if fixed_projections:
         mv.gd(fixed_projections=True,**kwargs)
-    elif fixed_embedding:
-        mv.gd(fixed_embedding=True,**kwargs)
     else:
-        mv.gd(**kwargs)
+        #mv.gd(**kwargs)
+        mv.optimized(**kwargs)
+    #mv.gd(**kwargs) ###
+
+    #save outputs:
+    mv.save()
         
     mv.plot_computations()
     mv.plot_embedding(title='final embeding')
-    mv.plot_images(edges=edges, labels=labels)
+    mv.plot_images()#edges=edges, labels=labels)
     plt.draw()
     plt.pause(0.2)
+    plt.show()
+    return mv.embedding
     
 if __name__=='__main__':
     print('mview.mpse : running tests')
-    weights1 = np.concatenate((np.ones(800),np.zeros(200)))
-    weights2 = [np.concatenate((np.zeros(100),np.ones(900))),
-                np.concatenate((np.zeros(100),np.ones(900))),
-                np.concatenate((np.zeros(100),np.ones(900)))]
-    basic(example='mnist',
-          fixed_projections=False,fixed_embedding=False,batch_size=None,
-          visualization_method='tsne',max_iter=400,
-          smart_initialization=True,min_cost=0.001,
-          visualization_args={'perplexity':30},
-          weights = None)
-    plt.show()
+
+ #   X = basic(dataset='clusters', n_samples=400, n_clusters=2,
+  #            n_perspectives=3,
+   #           fixed_projections=False,
+    #          visualization_method='tsne',
+     #         smart_initialization=False,
+      #        max_iter=200, visualization_args={'perplexity':300})
+
+    #X = basic(dataset='florence', digits=[1,7], n_samples=500,
+     #         #n_clusters=[4,4,4],
+      #        #n_perspectives=3,
+       #       fixed_projections=False,
+        #      visualization_method='tsne',
+         #     smart_initialization=False,
+          #    visualization_args={'perplexity':20})
+
+    
+    mpse_tsne('equidistant')
+    mpse_tsne('disk', n_perspectives=10)
+    mpse_tsne('clusters', n_clusters=[3,4,2], n_perspectives=3)
+    mpse_tsne('clusters2', n_clusters=2, n_perspectives=4, perplexity=80)
+    mpse_tsne('florence', perplexity = 40)
+    mpse_tsne('123', perplexity = 980)
+    mpse_tsne('credit')
+    mpse_tsne('mnist',n_samples=1000,perplexity=30)
+    mpse_tsne('mnist',n_samples=1000,perplexity=100)
+    mpse_tsne('phishing')
     

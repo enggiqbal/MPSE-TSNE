@@ -68,7 +68,7 @@ def joint_probabilities(distances, perplexity):
 
     #compute (symmetric) joint probabilities
     P = (conditional_P + conditional_P.T)
-    P = scipy.spatial.distance.squareform(P)
+    P = scipy.spatial.distance.squareform(P, checks=False)
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(P/sum_P, MACHINE_EPSILON)
 
@@ -201,7 +201,8 @@ class TSNE(object):
     """\
     Class to solve tsne problems
     """
-    def __init__(self, data, dim=2, perplexity=30.0, sample_colors=None,
+    def __init__(self, data, dim=2, perplexity=30.0,
+                 sample_labels=None, sample_classes=None, sample_colors=None,
                  verbose=0, indent='', **kwargs):
         """\
         Initializes TSNE object.
@@ -242,14 +243,13 @@ class TSNE(object):
         self.distances = setup.setup_distances(data, **kwargs)
         self.n_samples = scipy.spatial.distance.num_obs_y(self.distances)
 
-        
-
+        #sample labels, classes, and colors
+        self.sample_labels = sample_labels
+        self.sample_classes = sample_classes
         self.sample_colors = sample_colors
         
         self.N = self.n_samples
         self.D = self.distances
-
-        
 
         assert isinstance(dim,int); assert dim > 0
         self.dim = dim
@@ -270,6 +270,8 @@ class TSNE(object):
             else:
                 return batch_gradient(self.P,embedding,batch_size,indices)
         self.gradient = gradient
+
+        self.computation_history = []
 
         self.initialize()
 
@@ -307,21 +309,28 @@ class TSNE(object):
             if self.verbose > 0:
                 print(self.indent+'    method : initialization given')
             
-        self.embedding = X0
-        self.update(**kwargs)
+        self.update(X0)
         self.embedding0 = self.embedding.copy()
         
         if self.verbose > 0:
             print(self.indent+f'    initial cost : {self.cost:0.2e}')
-
-
-    def update(self,**kwargs):
+        
+    def update(self,X,H=None):
+        self.embedding = X
         self.cost = self.objective(self.embedding)
+        if H is not None:
+            self.computation_history.append(H)   
 
-    def gd(self, batch_size=None, **kwargs):
+    def gd(self, batch_size=None, lr=None, **kwargs):
         if self.verbose > 0:
             print(self.indent+'  TSNE.gd():')
             print(self.indent+'    specs:')
+
+        if lr is None:
+            if len(self.computation_history) != 0:
+                lr = self.computation_history[-1]['lr']
+            else:
+                lr = 100
 
         if batch_size is None or batch_size >= self.n_samples:
             Xi = None
@@ -341,16 +350,28 @@ class TSNE(object):
                 print(self.indent+'      gradient type : batch')
                 print(self.indent+'      batch size :',batch_size)
 
-        self.embedding, H = gd.single(self.embedding,F,Xi=Xi,
-                              verbose=self.verbose,
-                              indent=self.indent+'    ',
-                              **kwargs)
-        self.update()
+        X, H = gd.single(self.embedding,F,Xi=Xi, lr=lr,
+                        verbose=self.verbose,
+                        indent=self.indent+'    ',
+                        **kwargs)
+        self.update(X,H)
         if self.verbose > 0:
             print(self.indent+f'    final stress : {self.cost:0.2e}')
+
+    def optimized(self, iters=[20,20,20,100], **kwargs):
+        "attempts to find best embedding"
+        if self.verbose > 0:
+            print(self.indent+'  TSNE.optimized():')
+            self.indent+='  '
+        self.gd(batch_size=self.n_samples//50, max_iter=iters[0], scheme='mm')
+        self.gd(batch_size=self.n_samples//10, max_iter=iters[1], scheme='mm')
+        self.gd(batch_size=self.n_samples//5, max_iter=iters[2], scheme='mm')
+        self.gd(max_iter=iters[3],scheme='mm')
+        if self.verbose >0:
+            self.indent = self.indent[0:-2]
             
-    def plot_embedding(self,title='',edges=False,colors=None,labels=None,
-                axis=True,plot=True,ax=None,**kwargs):
+    def plot_embedding(self,title='', edges=False, colors=None, labels=None,
+                       axis=True, plot=True, ax=None, **kwargs):
         assert self.dim >= 2
         if ax is None:
             fig, ax = plt.subplots()
@@ -368,59 +389,73 @@ class TSNE(object):
             plt.draw()
             plt.pause(1)
 
+    def plot_computations(self, title='computations', plot=True, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            plot = False
+        costs = np.array([])
+        grads = np.array([])
+        lrs = np.array([])
+        steps = np.array([])
+        iterations=0; markers = []
+        for H in self.computation_history:
+            if iterations != 0:
+                ax.axvline(x=iterations-1,ls='--',c='black',lw=.5)
+            iterations += H['iterations']
+            costs = np.concatenate((costs,H['costs']))
+            grads = np.concatenate((grads,H['grads']))
+            lrs = np.concatenate((lrs,H['lrs']))
+            steps = np.concatenate((steps,H['steps']))
+        ax.semilogy(costs,label='stress',linewidth=3)
+        ax.semilogy(grads,label='grad size')
+        ax.semilogy(lrs,label='lr')
+        ax.semilogy(steps,label='step size')
+        ax.legend()
+        ax.set_title(title)
+        if plot is True:
+            plt.draw()
+            plt.pause(1.0)
 
-### TESTS ###
-
-def example_tsne(**kwargs):
-    X_true = np.load('examples/123/true2.npy')#[0:500]
-    colors = misc.labels(X_true)
-    from scipy import spatial
-    D = spatial.distance_matrix(X_true,X_true)
-
-    vis = TSNE(D,verbose=2,perplexity=10,sample_colors=colors)
-    vis.initialize(X0=X_true)
-    vis.plot_embedding()
-    vis.gd(plot=True,**kwargs)
-    vis.plot_embedding()
-    plt.show()
-
-def example_mnist(top=False, **kwargs,):
-    import samples
-    D,labels = samples.mnist(n_samples=2000)
-
-    if top is True:
-        D = D[:,0:28*14]
-    #labels = labels.T[0]
-    #D = D[0]
-    from mds import MDS
-    #vis = MDS(D)
-    #vis.gd(batch_size=50)
-    #vis.plot_embedding(colors=labels)
-    #X0 = vis.X
-    vis = TSNE(D,verbose=2,perplexity=30)
-    vis.initialize()
-    #vis.gd(plot=True,batch_size=30,**kwargs, max_iter=30)
-    #vis.gd(plot=True,batch_size=70)
-    vis.gd(plot=True)
-    vis.gd(plot=True,batch_size=70)
-    vis.gd(plot=True)
-    vis.plot_embedding(colors=labels)
-    plt.show()
+### COMPARISON ###
 
 def sk_tsne():
+    "tsne using sk-learn"
 
     X_true = np.load('examples/123/true2.npy')#[0:500]
     from scipy import spatial
     D = spatial.distance_matrix(X_true,X_true)
     
     from sklearn.manifold import TSNE as tsne
-    X_embedded = tsne(n_components=2,verbose=2,method='exact').fit_transform(X_true)
+    X_embedded = tsne(n_components=2,
+                      verbose=2,method='exact').fit_transform(X_true)
     plt.figure()
     plt.plot(X_embedded[:,0],X_embedded[:,1],'o')
     plt.show()
     
-if __name__=='__main__':
-    print('mview.tsne : tests')
-    #example_tsne()
-    example_mnist(top=True)
+### TESTS ###
+
+def basic(dataset='clusters',iters=[50,10,50,100],**kwargs):
+    print()
+    print('***mview.tsne.basic()***')
+    print('description: a basic run of mview.TSNE on a sample dataset')
+    print('dataset :',dataset)
+    print()
     
+    import samples
+    data = samples.sload(dataset,**kwargs)
+    
+    vis = TSNE(data['distances'], verbose=2, indent='  ', **data, **kwargs)
+
+    vis.optimized(iters,**kwargs)
+    vis.plot_computations()
+    vis.plot_embedding(colors=True)
+    plt.show()
+    
+if __name__=='__main__':
+    print('\n***mview.tsne : running tests***\n')
+
+    #basic(dataset='equidistant', n_samples=500, perplexity=300)
+    #basic(dataset='clusters', n_samples=400, n_clusters=8, perplexity=20)
+    #basic(dataset='clusters2', n_samples=400, n_clusters=3, perplexity=30)
+    #basic(dataset='mnist', n_samples=2000, digits=[0,1,2,3], perplexity=30)

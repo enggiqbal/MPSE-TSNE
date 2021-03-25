@@ -47,7 +47,7 @@ def setup_distances(data, shortest_path=False, min_distance=1e-4, **kwargs):
         if b == a:
             distances = distance.squareform(data, checks=False)
         else:
-            distances = distance.pdist(data,**kwargs)
+            distances = distance.pdist(data)######,**kwargs)
     if shortest_path:
         distances = distance.squareform(distances)
         distances = csgraph.shortest_path(distances)
@@ -174,3 +174,6 @@ def batch_indices(samples,n_samples):
     indices = n_samples*pairs[:,0]-pairs[:,0]*(pairs[:,0]+1)//2 + \
         pairs[:,1]-1-pairs[:,0]
     return indices
+
+def distance_to_sample(distances,sample):
+    return scipy.spatial.distance.squareform(distances)[sample]
