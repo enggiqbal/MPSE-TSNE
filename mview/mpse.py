@@ -748,6 +748,8 @@ def mpse_tsne(data, perplexity=30, iters=[10,10,10,100],
         distances, kwargs = samples.mload(data, verbose=verbose, **kwargs0)
         for key, value in kwargs0.items():
             kwargs[key] = value
+    else:
+        distances = data    
         
     #start MPSE object
     mv =  MPSE(distances, visualization_method='tsne',
