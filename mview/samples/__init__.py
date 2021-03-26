@@ -86,6 +86,8 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['image_colors'] = []
         if 'n_clusters' in kwargs:
             n_clusters = kwargs.pop('n_clusters')
+        else:
+            n_clusters = 2
         if isinstance(n_clusters,int):
             n_clusters = [n_clusters]*n_perspectives
         else:

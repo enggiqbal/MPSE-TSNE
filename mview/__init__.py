@@ -7,7 +7,7 @@ from projections import PROJ
 from mds import MDS
 from tsne import TSNE
 from mpse import MPSE
-from mpse import mpse_tsne
+from mtsne import mpse_tsne
 
 def basic(data, data_args=None, fixed_projections=None,
           visualization_method='mds', smart_initialize=True,

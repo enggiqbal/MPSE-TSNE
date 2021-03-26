@@ -210,6 +210,8 @@ class MPSE(object):
             self.visualization_instances.append(vis)
         self.visualization = self.visualization_instances
 
+        self.lr=[None,None]
+
         #setup objectives:
         if total_cost_function == 'rms':
             self.total_cost_function = lambda individual_costs : \
@@ -439,22 +441,39 @@ class MPSE(object):
         assert fixed_embedding is False or fixed_projections is False
 
         if lr is None:
-            if self.visualization_method == 'mds':
-                if fixed_projections:
+            lr = self.lr
+        if self.visualization_method == 'mds':
+            if fixed_projections:
+                if lr[0] is None:
                     lr = 1
-                elif fixed_embedding:
+                else:
+                    lr = lr[0]
+            elif fixed_embedding:
+                if lr[1] is None:
                     lr = 0.01
                 else:
-                    lr = [1,0.01]
-            elif self.visualization_method == 'tsne':
-                if fixed_projections:
+                    lr = lr[1]
+            else:
+                if lr[0] is None:
+                    lr[0] = 1
+                if lr[1] is None:
+                    lr[1] = 0.01
+        elif self.visualization_method == 'tsne':
+            if fixed_projections:
+                if lr[0] is None:
                     lr = 100
-                elif fixed_embedding:
+                else:
+                    lr = lr[0]
+            elif fixed_embedding:
+                if lr[1] is None:
                     lr = 10
                 else:
-                    lr = [100,10]
+                    lr = lr[1]
             else:
-                lr = [1,1]
+                if lr[0] is None:
+                    lr[0] = 100
+                if lr[1] is None:
+                    lr[1] = 10
                 
         if self.verbose > 0:
             print(self.indent+'  MPSE.gd():')
@@ -487,6 +506,7 @@ class MPSE(object):
             H['fixed_projections'] = True
             H['fixed_embedding'] = False
             self.computation_history.append(H)
+            self.lr[0] = H['lr']
         elif fixed_embedding:
             if self.verbose > 0:
                 print(self.indent+'      mpse method : fixed embedding')
@@ -515,6 +535,7 @@ class MPSE(object):
             H['fixed_projections'] = False
             H['fixed_embedding'] = True
             self.computation_history.append(H)
+            self.lr[1] = H['lr']
         else:
             if self.verbose > 0:
                 print(self.indent+'      fixed : None')
@@ -543,6 +564,7 @@ class MPSE(object):
             H['fixed_projections'] = False
             H['fixed_embedding'] = False
             self.computation_history.append(H)
+            self.lr =  H['lr']
             
         self.update()
 
@@ -737,51 +759,6 @@ class MPSE(object):
             np.savetxt(location+'sample_classes.csv', self.sample_classes,
                        fmt='%d')
 
-def mpse_tsne(data, perplexity=30, iters=[10,10,10,100],
-              verbose=2, show_plots=True, save_results = False,**kwargs):
-    "Runs MPSE optimized for tsne"
-    
-    #load data
-    if isinstance(data,str):
-        import samples
-        kwargs0 = kwargs
-        distances, kwargs = samples.mload(data, verbose=verbose, **kwargs0)
-        for key, value in kwargs0.items():
-            kwargs[key] = value
-    else:
-        distances = data    
-        
-    #start MPSE object
-    mv =  MPSE(distances, visualization_method='tsne',
-               visualization_args={'perplexity':perplexity}, verbose=verbose,
-               indent='  ', **kwargs)
-    n_samples = mv.n_samples
-
-    #search for global minima
-    if isinstance(iters,int):
-        iters = [20,20,iters]
-    elif len(iters)==1:
-        iters = [20,20,iters[0]]
-    elif len(iters)==2:
-        iters = [20,iters[0],iters[1]]
-    mv.gd(fixed_projections=True, max_iter=iters[0], scheme='bb')
-    for i, its in enumerate(iters[1:-1]):
-        batch_size = min(100//(2**i),n_samples//(2**i))
-        mv.gd(batch_size=batch_size, max_iter=its, scheme='mm')     
-    mv.gd(max_iter=iters[-1], scheme='bb', **kwargs)
-        
-    #save outputs:
-    if save_results is True:
-        mv.save()
-
-    if show_plots is True:
-        mv.plot_computations()
-        mv.plot_embedding()
-        mv.plot_images(**kwargs)
-        plt.show()
-    return mv
-    
-    
 ##### TESTS #####
 
 def basic(dataset='disk', fixed_projections=False,
@@ -826,30 +803,9 @@ def basic(dataset='disk', fixed_projections=False,
 if __name__=='__main__':
     print('mview.mpse : running tests')
 
- #   X = basic(dataset='clusters', n_samples=400, n_clusters=2,
-  #            n_perspectives=3,
-   #           fixed_projections=False,
-    #          visualization_method='tsne',
-     #         smart_initialization=False,
-      #        max_iter=200, visualization_args={'perplexity':300})
-
-    #X = basic(dataset='florence', digits=[1,7], n_samples=500,
-     #         #n_clusters=[4,4,4],
-      #        #n_perspectives=3,
-       #       fixed_projections=False,
-        #      visualization_method='tsne',
-         #     smart_initialization=False,
-          #    visualization_args={'perplexity':20})
-
-    
-    #mpse_tsne('equidistant', save_results=True)
-    #mpse_tsne('disk', n_perspectives=10)
-    #mpse_tsne('clusters', n_clusters=[3,4,2])
-    #mpse_tsne('clusters2', n_clusters=2, n_perspectives=4, perplexity=80)
-    #mpse_tsne('florence', perplexity = 40)
-    #mpse_tsne('123', perplexity = 980)
-    #mpse_tsne('credit')
-    #mpse_tsne('mnist',n_samples=500,perplexity=30)
-    #mpse_tsne('mnist',n_samples=1000,perplexity=100)
-    #mpse_tsne('phishing')
-    
+    X = basic(dataset='clusters', n_samples=400, n_clusters=2,
+              n_perspectives=3,
+              fixed_projections=False,
+              visualization_method='tsne',
+              smart_initialization=False,
+              max_iter=200, visualization_args={'perplexity':300})

@@ -1,5 +1,5 @@
 ### tSNE implementation ###
-import numbers
+import numbers, math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
@@ -183,8 +183,12 @@ def batch_gradient(P, embedding, batch_size=10, indices=None):
         
     grad = np.empty(embedding.shape)
     stress = 0
-    for start in range(0, n_samples, batch_size):
-        end = min(start+batch_size,n_samples)
+    #for start in range(0, n_samples, batch_size):
+    batch_number = n_samples//batch_size
+    start = 0; end = start+batch_size
+    for i in range(batch_number):
+        if i < n_samples%batch_number:
+            end +=1
         batch_idx = np.sort(indices[start:end])
         embedding_batch = embedding[batch_idx]
         P_batch = P[setup.batch_indices(batch_idx,n_samples)]
@@ -193,6 +197,8 @@ def batch_gradient(P, embedding, batch_size=10, indices=None):
         grad[batch_idx], st0 = grad_KL(P_batch,embedding_batch,
                                        dist=dist,Q=Q_batch)
         stress += st0
+        start = end
+        end = start + batch_size
     grad *= n_samples/batch_size
     stress *= n_samples/batch_size
     return grad, stress
