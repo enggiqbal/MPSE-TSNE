@@ -31,5 +31,20 @@ def separation_error(X, y, plot=False):
                    linestyles=['--', '-', '--'])
         plt.show()
 
-    return min(np.linalg.norm([1]*len(predicted) - predicted - y),
-               np.linalg.norm(predicted - y))
+    error = min(np.linalg.norm([1]*len(predicted) - predicted - y),
+                np.linalg.norm(predicted - y))
+    return error**2/len(X)
+
+def separation_errors(coordinates, labels, n_classes):
+    "returns all separation errors"
+    errors = []
+    n_samples = len(coordinates)
+    for i in range(n_classes):
+        for j in range(i+1,n_classes):
+            indices = [i for i in range(n_samples) if labels[i] in [i,j]]
+            X = coordinates[indices]
+            y = labels[indices]
+            errors.append(separation_error(X,y))
+    return errors
+
+
