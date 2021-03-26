@@ -26,33 +26,26 @@ def mnist(n_samples=1000, digits=None, **kwargs):
 def sload(dataset, **kwargs):
     
     data = {}
-    keys = ['distances','features','sample_labels','sample_classes',
-            'colors','edges',
-            'labels']
-    
-    for key in keys:
-        data[key] = None
-
     if dataset == 'equidistant':
         from clusters import equidistant
-        data['distances'] = equidistant(**kwargs)
+        distances = equidistant(**kwargs)
     elif dataset == 'clusters':
         from clusters import clusters
-        data['distances'], data['sample_classes'] = clusters(**kwargs)
+        distances, data['sample_classes'] = clusters(**kwargs)
         data['sample_colors'] = data['sample_classes']
     elif dataset == 'clusters2':
         from clusters import clusters2
         data['features'], data['sample_classes'] = clusters2(**kwargs)
-        data['distances'] = data['features']
+        distances = data['features']
         data['sample_colors'] = data['sample_classes']
     elif dataset == 'mnist':
         data['features'], data['sample_classes'] = mnist(**kwargs)
-        data['distances'] = data['features']
+        distances = data['features']
         data['sample_colors'] = data['sample_classes']
     else:
         print('***dataset not found***')
 
-    return data
+    return distances, data
 
 def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
     "returns dictionary with datasets"

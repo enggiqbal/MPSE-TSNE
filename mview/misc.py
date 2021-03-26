@@ -55,6 +55,7 @@ def random_triangular(N,number,replace=False):
 ## X -> dataset y-> labels either 0 or 1.
 def computErrorLinearSeparatorSVM(X, y, plot=False):
 
+    import sklearn
     from sklearn import svm
     from sklearn.datasets import make_blobs
     
@@ -89,7 +90,7 @@ def computErrorLinearSeparatorSVM(X, y, plot=False):
 # we create 40 separable points
 if __name__=='__main__':
     import samples
-    data = samples.sload('clusters2', n_samples=40)
-    X = data['D']; yLabels = data['colors']
+    X, data = samples.sload('clusters2', n_samples=40)
+    yLabels = data['sample_classes']
     errorVal = computErrorLinearSeparatorSVM(X, yLabels, plot=True)
     print(errorVal)

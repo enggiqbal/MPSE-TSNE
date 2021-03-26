@@ -8,6 +8,7 @@ from mds import MDS
 from tsne import TSNE
 from mpse import MPSE
 from mtsne import mpse_tsne
+import evaluate
 
 def basic(data, data_args=None, fixed_projections=None,
           visualization_method='mds', smart_initialize=True,
