@@ -25,6 +25,7 @@ class MPSE(object):
                  projection_family='linear',projection_constraint='orthogonal',
                  hidden_samples=None,
                  sample_labels=None, perspective_labels=None,
+                 sample_classes=None, image_classes=None,
                  sample_colors=None, image_colors=None,
                  verbose=0, indent='',
                  **kwargs):
@@ -177,7 +178,9 @@ class MPSE(object):
             assert len(perspective_labels) == self.n_perspectives
         self.perspective_labels = perspective_labels
         
-        #setup colors:
+        #setup classes and colors:
+        self.sample_classes = sample_classes
+        self.image_classes = image_classes
         self.sample_colors = sample_colors
         self.image_colors = image_colors
 
@@ -721,6 +724,8 @@ class MPSE(object):
         location=directory+'/temp/'
         if not os.path.exists(location):
             os.makedirs(location)
+        for f in os.listdir(location):
+            os.remove(os.path.join(location,f))
             
         np.savetxt(location+'embedding.csv', self.embedding)
         for i in range(self.n_perspectives):
@@ -728,8 +733,8 @@ class MPSE(object):
                        self.projections[i])
             np.savetxt(location+'images_'+str(i)+'.csv',
                        self.images[i])
-        if self.sample_labels is not None:
-            np.savetxt(location+'sample_labels.csv', self.sample_labels,
+        if self.sample_classes is not None:
+            np.savetxt(location+'sample_classes.csv', self.sample_classes,
                        fmt='%d')
 
 def mpse_tsne(data, perplexity=30, iters=[10,10,10,100],
@@ -835,14 +840,14 @@ if __name__=='__main__':
           #    visualization_args={'perplexity':20})
 
     
-    #mpse_tsne('equidistant')
+    #mpse_tsne('equidistant', save_results=True)
     #mpse_tsne('disk', n_perspectives=10)
-    mpse_tsne('clusters', n_clusters=[3,4,2])
+    #mpse_tsne('clusters', n_clusters=[3,4,2])
     #mpse_tsne('clusters2', n_clusters=2, n_perspectives=4, perplexity=80)
     #mpse_tsne('florence', perplexity = 40)
     #mpse_tsne('123', perplexity = 980)
     #mpse_tsne('credit')
-    #mpse_tsne('mnist',n_samples=1000,perplexity=30)
+    #mpse_tsne('mnist',n_samples=500,perplexity=30)
     #mpse_tsne('mnist',n_samples=1000,perplexity=100)
     #mpse_tsne('phishing')
     

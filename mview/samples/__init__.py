@@ -12,9 +12,14 @@ def mnist(n_samples=1000, digits=None, **kwargs):
         indices = [i for i in range(len(Y_train)) if Y_train[i] in digits]
         X_train = X_train[indices]
         Y_train = Y_train[indices]
-    X = X_train[0:n_samples]
-    labels = Y_train[0:n_samples]
-    X = X.reshape(n_samples,28*28)
+    if isinstance(n_samples,int):
+        indices = list(range(0,n_samples))
+    else:
+        indices = n_samples
+    assert(len(X_train)) >= len(indices)
+    X = X_train[indices]
+    labels = Y_train[indices]
+    X = X.reshape(len(indices),28*28)
     X = np.array(X,dtype='float')/256
     return X, labels
 
@@ -144,10 +149,10 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['sample_colors'] = sample_colors
         data['perspective_labels'] = perspective_labels
     elif dataset == 'mnist':
-        X, data['sample_colors'] = mnist(**kwargs)
+        X, data['sample_classes'] = mnist(n_samples, **kwargs)
         data['features'] = X
         distances = [X[:,0:28*14],X[:,28*14::]]
-        data['sample_classes'] = data['sample_colors']
+        data['sample_colors'] = data['sample_classes'].copy()
     else:
         print('***dataset not found***')
     return distances, data
