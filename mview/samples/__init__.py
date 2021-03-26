@@ -86,7 +86,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         else:
             n_perspectives = len(n_clusters)
         for i in range(n_perspectives):
-            d, c = clusters(n_samples, n_clustesr=n_clusters[i], **kwargs)
+            d, c = clusters(n_samples, n_clusters=n_clusters[i], **kwargs)
             distances.append(d)
             data['image_classes'].append(c)
             data['image_colors'].append(c)
@@ -112,7 +112,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['true_embedding'] = X
         data['true_projections'] = Q
         data['true_images'] = [X1,X2,X3]
-        data['colors'] = True
+        data['image_colors'] = 0
     elif dataset == 'florence':
         import florence
         distances, dictf = florence.setup()
