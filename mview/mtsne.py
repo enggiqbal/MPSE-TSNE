@@ -91,7 +91,8 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
     return
 
 if __name__=='__main__':
-    run_all_mpse_tsne = True
+    run_all_mpse_tsne = False
+    mpse_tsne('disk2', n_samples=100, n_perspectives=3, perplexity=30)
 
     #compare_perplexity(dataset='clusters2', n_samples=500, perplexities=[5,30])
     #compare_mds_tsne()

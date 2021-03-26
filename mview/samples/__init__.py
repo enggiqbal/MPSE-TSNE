@@ -68,6 +68,21 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['true_projections'] = Q
         distances = Y
         data['image_colors'] = 0
+    elif dataset == 'disk2':
+        import misc, projections
+        X = misc.disk(n_samples, dim=3)
+        proj = projections.PROJ()
+        Q = proj.generate(number=n_perspectives, method='random')
+        Y = proj.project(Q,X)
+        data['true_images'] = Y
+        data['true_embedding'] = X
+        data['true_projections'] = Q
+        distances = Y
+        labels = []
+        for y in Y:
+            labels.append([1 if yi[0]>=0 else 0 for yi in y])
+        data['image_classes'] = labels
+        data['image_colors'] = data['image_classes']
     elif dataset == 'clusters2a':
         from clusters import createClusters
         D, data['image_colors'] = \
