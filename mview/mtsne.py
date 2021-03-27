@@ -9,11 +9,11 @@ import misc, setup, multigraph, gd, projections, mds, tsne, plots, mpse, samples
 from mpse import MPSE
 
 def mpse_tsne(data, perplexity=30, iters=50,
-              estimate_cost=False,
-              verbose=2, show_plots=True, save_results = False,**kwargs):
+              estimate_cost=True,
+              verbose=0, show_plots=False, save_results = False,**kwargs):
     "Runs MPSE optimized for tsne"
     
-    #load data
+    #load/prepare distances and other variables from data
     if isinstance(data,str):
         import samples
         kwargs0 = kwargs
@@ -52,9 +52,18 @@ def mpse_tsne(data, perplexity=30, iters=50,
     return mv
 
 def compare_perplexity(dataset='clusters', perplexities=[30,200], **kwargs):
-    data = samples.sload(dataset, **kwargs)
-    D = [data['D']]*2
-    va = []
+    "runs mpse_tsne on the same perspective w/ different perplexity values"
+    
+    #load/prepare distances and other variables from data
+    if isinstance(data,str):
+        import samples
+        kwargs0 = kwargs
+        distances, kwargs = samples.sload(data, verbose=verbose, **kwargs0)
+        for key, value in kwargs0.items():
+            kwargs[key] = value
+    else:
+        distances = data
+        
     for p in perplexities:
         va.append({'perplexity':p})
     mv = MPSE(D,visualization_method='tsne',
@@ -93,22 +102,28 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
     return
 
 if __name__=='__main__':
+    estimate_cost=False
     run_all_mpse_tsne = True
-    #mpse_tsne('disk2', n_samples=100, n_perspectives=3, perplexity=30,
-    #          estimate_cost=False)
-
     #compare_perplexity(dataset='clusters2', n_samples=500, perplexities=[5,30])
     #compare_mds_tsne()
 
     if run_all_mpse_tsne is True:
-        mpse_tsne('equidistant', save_results=True)
-        mpse_tsne('disk', n_perspectives=10)
-        mpse_tsne('clusters', n_clusters=[3,4,2])
-        mpse_tsne('clusters2', n_clusters=2, n_perspectives=4, perplexity=80)
-        mpse_tsne('florence', perplexity = 40)
-        mpse_tsne('123', n_samples=500, perplexity = 980)
-        mpse_tsne('credit')
-        mpse_tsne('mnist',n_samples=500,perplexity=30)
-        mpse_tsne('mnist',n_samples=1000,perplexity=100)
-        mpse_tsne('phishing')
+        mpse_tsne('equidistant',
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('disk', n_perspectives=10,
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('clusters', n_clusters=[3,4,2],
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('clusters2', n_clusters=2, n_perspectives=4, perplexity=80,
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('florence', perplexity = 40,
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('123', n_samples=500, perplexity = 460,
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('mnist',n_samples=500,perplexity=30,
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('mnist',n_samples=500,perplexity=100,
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+        mpse_tsne('phishing',
+                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
     

@@ -23,20 +23,34 @@ def mnist(n_samples=1000, digits=None, **kwargs):
     X = np.array(X,dtype='float')/256
     return X, labels
 
-def sload(dataset, **kwargs):
+def sload(dataset, n_samples=200, **kwargs):
     
     data = {}
     if dataset == 'equidistant':
-        from clusters import equidistant
-        distances = equidistant(**kwargs)
+        length = n_samples*(n_samples-1)//2
+        distances = np.random.normal(1,0.1,length)
+        data['sample_colors'] = n_samples-1
+    elif dataset == 'disk':
+        import misc
+        distances = misc.disk(n_samples, dim=2)
+        data['sample_colors'] = None
     elif dataset == 'clusters':
         from clusters import clusters
-        distances, data['sample_classes'] = clusters(**kwargs)
+        if 'n_clusters' in kwargs:
+            n_clusters = kwargs.pop('n_clusters')
+        else:
+            n_clusters = 2
+        distances, sc = clusters(n_samples, n_clusters=n_clusters, **kwargs)
+        data['sample_classes'] = sc
         data['sample_colors'] = data['sample_classes']
     elif dataset == 'clusters2':
-        from clusters import clusters2
-        data['features'], data['sample_classes'] = clusters2(**kwargs)
-        distances = data['features']
+        from clusters import clusters
+        if 'n_clusters' in kwargs:
+            n_clusters = kwargs.pop('n_clusters')
+        else:
+            n_clusters = 2
+        distances, sc = clusters2(n_samples, n_clusters=n_clusters, **kwargs)
+        data['sample_classes'] = sc
         data['sample_colors'] = data['sample_classes']
     elif dataset == 'mnist':
         data['features'], data['sample_classes'] = mnist(**kwargs)
@@ -117,10 +131,10 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
             distances.append(d); data['image_colors'].append(c)
     elif dataset == '123':
         import projections
-        X = np.genfromtxt(directory+'/123/123.csv',delimiter=',')
-        X1 = np.genfromtxt(directory+'/123/1.csv',delimiter=',')
-        X2 = np.genfromtxt(directory+'/123/2.csv',delimiter=',')
-        X3 = np.genfromtxt(directory+'/123/3.csv',delimiter=',')
+        X = np.genfromtxt(directory+'/123/123.csv',delimiter=',')[0:n_samples]
+        X1 = np.genfromtxt(directory+'/123/1.csv',delimiter=',')[0:n_samples]
+        X2 = np.genfromtxt(directory+'/123/2.csv',delimiter=',')[0:n_samples]
+        X3 = np.genfromtxt(directory+'/123/3.csv',delimiter=',')[0:n_samples]
         proj = projections.PROJ()
         Q = proj.generate(number=3,method='cylinder')
         distances = [X1,X2,X3]

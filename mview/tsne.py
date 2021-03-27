@@ -445,17 +445,24 @@ def sk_tsne():
     
 ### TESTS ###
 
-def basic(dataset='clusters',iters=[50,10,50,100],**kwargs):
+def basic(data,iters=[50,10,50,100],**kwargs):
     print()
     print('***mview.tsne.basic()***')
     print('description: a basic run of mview.TSNE on a sample dataset')
-    print('dataset :',dataset)
+    if isinstance(data,str):
+        print('dataset :',data)
     print()
     
-    import samples
-    data = samples.sload(dataset,**kwargs)
+    if isinstance(data,str):
+        import samples
+        kwargs0 = kwargs
+        distances, kwargs = samples.sload(data, **kwargs0)
+        for key, value in kwargs0.items():
+            kwargs[key] = value
+    else:
+        distances = data
     
-    vis = TSNE(data['distances'], verbose=2, indent='  ', **data, **kwargs)
+    vis = TSNE(distances, verbose=2, indent='  ', **kwargs)
 
     vis.optimized(iters,**kwargs)
     vis.plot_computations()
@@ -465,7 +472,7 @@ def basic(dataset='clusters',iters=[50,10,50,100],**kwargs):
 if __name__=='__main__':
     print('\n***mview.tsne : running tests***\n')
 
-    #basic(dataset='equidistant', n_samples=500, perplexity=300)
-    #basic(dataset='clusters', n_samples=400, n_clusters=8, perplexity=20)
-    #basic(dataset='clusters2', n_samples=400, n_clusters=3, perplexity=30)
-    #basic(dataset='mnist', n_samples=2000, digits=[0,1,2,3], perplexity=30)
+    #basic('clusters', n_samples=200, perplexity=30)
+    #basic('clusters', n_samples=400, n_clusters=8, perplexity=20)
+    #basic('clusters2', n_samples=400, n_clusters=3, perplexity=30)
+    basic('mnist', n_samples=500, digits=[0,1,2,3], perplexity=30)
