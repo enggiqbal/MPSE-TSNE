@@ -44,7 +44,7 @@ def sload(dataset, n_samples=200, **kwargs):
         data['sample_classes'] = sc
         data['sample_colors'] = data['sample_classes']
     elif dataset == 'clusters2':
-        from clusters import clusters
+        from clusters import clusters2
         if 'n_clusters' in kwargs:
             n_clusters = kwargs.pop('n_clusters')
         else:

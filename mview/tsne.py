@@ -380,7 +380,7 @@ class TSNE(object):
         if self.verbose >0:
             self.indent = self.indent[0:-2]
             
-    def plot_embedding(self,title='', edges=False, colors=None, labels=None,
+    def plot_embedding(self,title='', edges=False, colors=True, labels=None,
                        axis=True, plot=True, ax=None, **kwargs):
         assert self.dim >= 2
         if ax is None:

@@ -7,6 +7,7 @@ import scipy.spatial.distance
 
 import misc, setup, multigraph, gd, projections, mds, tsne, plots, mpse, samples
 from mpse import MPSE
+from tsne import TSNE
 
 def mpse_tsne(data, perplexity=30, iters=50,
               estimate_cost=True,
@@ -51,29 +52,47 @@ def mpse_tsne(data, perplexity=30, iters=50,
         plt.show()
     return mv
 
-def compare_perplexity(dataset='clusters', perplexities=[30,200], **kwargs):
+def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
     "runs mpse_tsne on the same perspective w/ different perplexity values"
     
     #load/prepare distances and other variables from data
     if isinstance(data,str):
         import samples
         kwargs0 = kwargs
-        distances, kwargs = samples.sload(data, verbose=verbose, **kwargs0)
+        distances, kwargs = samples.sload(data, **kwargs0)
         for key, value in kwargs0.items():
             kwargs[key] = value
     else:
         distances = data
+
+    for p in perplexities:
+        ts = TSNE(distances,perplexity=p, **kwargs)
+        ts.optimized()
+        ts.plot_embedding()
+        print(ts.cost)
+
         
+    distances = [distances]*len(perplexities)
+
+    va = []
     for p in perplexities:
         va.append({'perplexity':p})
-    mv = MPSE(D,visualization_method='tsne',
-              fixed_projections='standard',
+    mv = MPSE(distances,visualization_method='tsne',
               visualization_args=va,
-              colors=data['colors'],verbose=2)
+              verbose=0,**kwargs)
 
-    mv.optimized()
+    #search for global minima
+    n_samples=200
+    mv.gd(fixed_projections=True, max_iter=50, batch_size=min(25,n_samples//2),
+          scheme='mm')
+    for divisor in [20,10,5,2]:
+        batch_size = max(5,min(500,n_samples//divisor))
+        mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
+    #mv.gd(max_iter=20, scheme='mm')
+    mv.gd(max_iter=iters, scheme='fixed')
+    print(mv.individual_cost)
         
-    #mv.plot_computations()
+    mv.plot_computations()
     mv.plot_embedding(title='final embeding')
     mv.plot_images()
     plt.draw()
@@ -104,7 +123,7 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
 if __name__=='__main__':
     estimate_cost=False
     run_all_mpse_tsne = True
-    #compare_perplexity(dataset='clusters2', n_samples=500, perplexities=[5,30])
+    compare_perplexity('clusters2', n_samples=200, perplexities=[15,100])
     #compare_mds_tsne()
 
     if run_all_mpse_tsne is True:
