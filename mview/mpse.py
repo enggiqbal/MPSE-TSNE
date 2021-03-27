@@ -202,7 +202,7 @@ class MPSE(object):
                               embedding_dimension=self.image_dimension,
                               verbose=self.verbose, indent=self.indent+'    ',
                               **visualization_args[i])
-            elif visualization_method[i] is 'tsne':
+            elif visualization_method[i] == 'tsne':
                 vis = tsne.TSNE(self.distances[i],
                                 embedding_dimension=self.image_dimension,
                                 verbose=self.verbose, indent=self.indent+'    ',
