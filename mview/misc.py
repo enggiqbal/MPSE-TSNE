@@ -85,12 +85,3 @@ def computErrorLinearSeparatorSVM(X, y, plot=False):
 
     return min(np.linalg.norm([1]*len(predicted) - predicted - y),
                np.linalg.norm(predicted - y))
-
-
-# we create 40 separable points
-if __name__=='__main__':
-    import samples
-    X, data = samples.sload('clusters2', n_samples=40)
-    yLabels = data['sample_classes']
-    errorVal = computErrorLinearSeparatorSVM(X, yLabels, plot=True)
-    print(errorVal)

@@ -358,6 +358,7 @@ class MPSE(object):
         self.initial_cost = None
         self.initial_individual_cost = None
         self.computation_history = []
+        self.cost_history = np.array([])
         self.time = 0
         self.update(**kwargs)
 
@@ -466,14 +467,14 @@ class MPSE(object):
                     lr = lr[0]
             elif fixed_embedding:
                 if lr[1] is None:
-                    lr = 10
+                    lr = .01
                 else:
                     lr = lr[1]
             else:
                 if lr[0] is None:
                     lr[0] = 100
                 if lr[1] is None:
-                    lr[1] = 10
+                    lr[1] = .01
                 
         if self.verbose > 0:
             print(self.indent+'  MPSE.gd():')
@@ -506,6 +507,7 @@ class MPSE(object):
             H['fixed_projections'] = True
             H['fixed_embedding'] = False
             self.computation_history.append(H)
+            self.cost_history = np.concatenate((self.cost_history,H['costs']))
             self.lr[0] = H['lr']
         elif fixed_embedding:
             if self.verbose > 0:
@@ -535,6 +537,7 @@ class MPSE(object):
             H['fixed_projections'] = False
             H['fixed_embedding'] = True
             self.computation_history.append(H)
+            self.cost_history = np.concatenate((self.cost_history,H['costs']))
             self.lr[1] = H['lr']
         else:
             if self.verbose > 0:
@@ -564,6 +567,7 @@ class MPSE(object):
             H['fixed_projections'] = False
             H['fixed_embedding'] = False
             self.computation_history.append(H)
+            self.cost_history = np.concatenate((self.cost_history,H['costs']))
             self.lr =  H['lr']
             
         self.update()
@@ -755,42 +759,32 @@ class MPSE(object):
                        self.projections[i])
             np.savetxt(location+'images_'+str(i)+'.csv',
                        self.images[i])
+        np.savetxt(location+'cost_history.csv', self.cost_history)
         if self.sample_classes is not None:
             np.savetxt(location+'sample_classes.csv', self.sample_classes,
                        fmt='%d')
 
 ##### TESTS #####
 
-def basic(dataset='disk', fixed_projections=False,
-             smart_initialization=True,
-             verbose=2, **kwargs):
-    import samples
-    data = samples.mload(dataset, **kwargs)
-    if fixed_projections:
-        mv = MPSE(data['D'],fixed_projections=data['Q'],verbose=verbose,
-                  colors=data['colors'],
-                  sample_labels = data['sample_labels'],
-                  image_colors=data['image_colors'],**kwargs)
-    else:
-        mv = MPSE(data['D'],verbose=verbose,colors=data['colors'],
-                  image_colors=data['image_colors'],
-                  sample_labels=data['sample_labels'],
-                  **kwargs)
+def basic(data, verbose=2, save_results=False, **kwargs):
     
-    if smart_initialization and fixed_projections is False:
-        mv.smart_initialize()
-        mv.plot_embedding(title='smart initialize')
-        mv.plot_images(title='smart init')
-
-    if fixed_projections:
-        mv.gd(fixed_projections=True,**kwargs)
+    #load distances if necessary
+    if isinstance(data,str):
+        import samples
+        kwargs0 = kwargs
+        distances, kwargs = samples.mload(data, verbose=verbose, **kwargs0)
+        for key, value in kwargs0.items():
+            kwargs[key] = value
     else:
-        #mv.gd(**kwargs)
-        mv.optimized(**kwargs)
-    #mv.gd(**kwargs) ###
+        distances = data
+        
+    mv = MPSE(distances,verbose=verbose, **kwargs)
+    
+    mv.gd(**kwargs)
 
     #save outputs:
-    mv.save()
+    if save_results is True:
+        mv.save()
         
     mv.plot_computations()
     mv.plot_embedding(title='final embeding')
@@ -803,9 +797,8 @@ def basic(dataset='disk', fixed_projections=False,
 if __name__=='__main__':
     print('mview.mpse : running tests')
 
-    X = basic(dataset='clusters', n_samples=400, n_clusters=2,
+    X = basic('clusters', n_samples=400, n_clusters=2,
               n_perspectives=3,
-              fixed_projections=False,
               visualization_method='tsne',
-              smart_initialization=False,
-              max_iter=200, visualization_args={'perplexity':300})
+              max_iter=20, visualization_args={'perplexity':300},
+              save_results=True)

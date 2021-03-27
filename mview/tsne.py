@@ -170,7 +170,8 @@ def grad_KL(P,embedding,dist=None,Q=None):
     
     return grad, kl_divergence
 
-def batch_gradient(P, embedding, batch_size=10, indices=None):
+def batch_gradient(P, embedding, batch_size=10, indices=None,
+                   estimate_cost=True):
     """\
     Returns gradient approximation.
     """
@@ -201,13 +202,15 @@ def batch_gradient(P, embedding, batch_size=10, indices=None):
         end = start + batch_size
     grad *= n_samples/batch_size
     stress *= n_samples/batch_size
+    if estimate_cost is False:
+        stress = KL(P, embedding)
     return grad, stress
 
 class TSNE(object):
     """\
     Class to solve tsne problems
     """
-    def __init__(self, data, dim=2, perplexity=30.0,
+    def __init__(self, data, dim=2, perplexity=30.0, estimate_cost=True,
                  sample_labels=None, sample_classes=None, sample_colors=None,
                  verbose=0, indent='', **kwargs):
         """\
@@ -274,7 +277,8 @@ class TSNE(object):
             if batch_size is None or batch_size >= self.n_samples:
                 return grad_KL(self.P,embedding)
             else:
-                return batch_gradient(self.P,embedding,batch_size,indices)
+                return batch_gradient(self.P,embedding,batch_size,indices,
+                                      estimate_cost=estimate_cost)
         self.gradient = gradient
 
         self.computation_history = []

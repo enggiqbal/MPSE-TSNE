@@ -9,6 +9,7 @@ import misc, setup, multigraph, gd, projections, mds, tsne, plots, mpse, samples
 from mpse import MPSE
 
 def mpse_tsne(data, perplexity=30, iters=50,
+              estimate_cost=False,
               verbose=2, show_plots=True, save_results = False,**kwargs):
     "Runs MPSE optimized for tsne"
     
@@ -24,14 +25,15 @@ def mpse_tsne(data, perplexity=30, iters=50,
         
     #start MPSE object
     mv =  MPSE(distances, visualization_method='tsne',
-               visualization_args={'perplexity':perplexity}, verbose=verbose,
+               visualization_args={'perplexity':perplexity,
+                                   'estimate_cost':estimate_cost},
+               verbose=verbose,
                indent='  ', **kwargs)
     n_samples = mv.n_samples
 
     #search for global minima
-    mv.gd(fixed_projections=True, max_iter=20, batch_size=min(25,n_samples//2),
+    mv.gd(fixed_projections=True, max_iter=10, batch_size=min(25,n_samples//2),
           scheme='mm')
-    mv.gd(fixed_projections=True, max_iter=20, scheme='bb')
     for divisor in [20,10,5,2]:
         batch_size = max(5,min(500,n_samples//divisor))
         mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
@@ -91,8 +93,9 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
     return
 
 if __name__=='__main__':
-    run_all_mpse_tsne = False
-    mpse_tsne('disk2', n_samples=100, n_perspectives=3, perplexity=30)
+    run_all_mpse_tsne = True
+    #mpse_tsne('disk2', n_samples=100, n_perspectives=3, perplexity=30,
+    #          estimate_cost=False)
 
     #compare_perplexity(dataset='clusters2', n_samples=500, perplexities=[5,30])
     #compare_mds_tsne()
