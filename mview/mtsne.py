@@ -170,9 +170,13 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
     return
 
 if __name__=='__main__':
+    mpse_tsne('clusters', n_clusters=[2,5],
+              evaluate=True, n_perspectives=7,
+              verbose=2,show_plots=True)
+
+    
     estimate_cost=False
     evaluate=True
-
     run_all_mpse_tsne = True
     if run_all_mpse_tsne is True:
         mpse_tsne('equidistant',
