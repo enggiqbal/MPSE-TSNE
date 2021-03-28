@@ -9,10 +9,13 @@ import misc, setup, multigraph, gd, projections, mds, tsne, plots, mpse, samples
 from mpse import MPSE
 from tsne import TSNE
 
-def mpse_tsne(data, perplexity=30, iters=50,
+def mpse_tsne(data, perplexity=30,
+              iters=100, lr=[20,0.1],
               estimate_cost=True,
               verbose=0, show_plots=False, save_results = False,**kwargs):
     "Runs MPSE optimized for tsne"
+    if verbose>0:
+        print('***mview.mpse_tsne()***')
     
     #load/prepare distances and other variables from data
     if isinstance(data,str):
@@ -30,16 +33,18 @@ def mpse_tsne(data, perplexity=30, iters=50,
                                    'estimate_cost':estimate_cost},
                verbose=verbose,
                indent='  ', **kwargs)
+    mv.lr = lr
     n_samples = mv.n_samples
 
     #search for global minima
     mv.gd(fixed_projections=True, max_iter=10, batch_size=min(25,n_samples//2),
           scheme='mm')
-    for divisor in [20,10,5,2]:
+    for divisor in [20,10,5]:
         batch_size = max(5,min(500,n_samples//divisor))
         mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
-    #mv.gd(max_iter=20, scheme='mm')
-    mv.gd(max_iter=iters, scheme='fixed')
+    #mv.gd(max_iter=20, scheme='bb')
+    #mv.gd(max_iter=iters, scheme='fixed')
+    mv.gd(max_iter=iters, batch_size=int(n_samples/2), scheme='mm')
         
     #save outputs:
     if save_results is True:
@@ -123,8 +128,12 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
 if __name__=='__main__':
     estimate_cost=False
     run_all_mpse_tsne = True
-    compare_perplexity('clusters2', n_samples=200, perplexities=[15,100])
-    #compare_mds_tsne()
+    #compare_perplexity('clusters', n_samples=200, n_clusters=3,
+    #                   perplexities=[15,100])
+    #mpse_tsne('clusters', n_clusters=3, perplexity=30, n_perspectives=4,
+    #          show_plots=True)
+    mpse_tsne('phishing',
+              estimate_cost=estimate_cost,verbose=2,show_plots=True)
 
     if run_all_mpse_tsne is True:
         mpse_tsne('equidistant',

@@ -243,7 +243,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
     
     t0 = time.time()
 
-    normalization = math.sqrt(np.size(x)) ###############
+    normalization = len(x)*math.sqrt(np.size(x[0]))
 
     #initialization by running one iteration of GD w/ initial lr
     x0 = x.copy()
@@ -436,7 +436,7 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
 
     t0 = time.time()
 
-    normalization = [math.sqrt(np.size(a)) for a in X] ####
+    normalization = [len(a)*math.sqrt(np.size(a[0])) for a in X] ####
 
     X0 = X.copy()
     it0 = 1

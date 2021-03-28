@@ -33,7 +33,8 @@ def sload(dataset, n_samples=200, **kwargs):
     elif dataset == 'disk':
         import misc
         distances = misc.disk(n_samples, dim=2)
-        data['sample_colors'] = None
+        data['features'] = distances
+        data['sample_colors'] = n_samples-1
     elif dataset == 'clusters':
         from clusters import clusters
         if 'n_clusters' in kwargs:

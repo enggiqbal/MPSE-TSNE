@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import scipy.spatial.distance
+from scipy.spatial.distance import squareform
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 import misc, gd, plots, setup
+
+### joint probabilities from distances ###
 
 def joint_probabilities(distances, perplexity):
     """\
@@ -19,7 +22,7 @@ def joint_probabilities(distances, perplexity):
     Pairwise distances, given as a condensed 1D array.
 
     perpelxity : float, >0
-    Desired perpelxity of the joint probability distribution.
+    Desired perplexity of the joint probability distribution.
     
     Returns
     -------
@@ -117,12 +120,11 @@ def KL(P,embedding):
     kl_divergence : float
     KL-divergence KL(P||Q).
     """
-    # compute Q:
-    dist = scipy.spatial.distance.pdist(embedding,metric='sqeuclidean')
-    dist += 1.0
-    dist **= -1.0
+    # compute Q matrix
+    dist = inverse_square_law_distances(embedding)
     Q = np.maximum(dist/(np.sum(dist)), MACHINE_EPSILON)
-    
+
+    # compute kl divergence
     kl_divergence = 2.0 * np.dot(
         P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
         
@@ -154,10 +156,8 @@ def grad_KL(P,embedding,dist=None,Q=None):
     gradiet of KL(P||Q(X)) w.r.t. X.
     """
     if dist is None or Q is None:
-        dist = scipy.spatial.distance.pdist(embedding,metric='sqeuclidean')
-        dist += 1.0
-        dist **= -1.0
-        Q = np.maximum(dist/(np.sum(dist)), MACHINE_EPSILON) ######
+        dist = inverse_square_law_distances(embedding)
+        Q = np.maximum(dist/(np.sum(dist)), MACHINE_EPSILON)
     
     kl_divergence = 2.0 * np.dot(
         P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
@@ -184,7 +184,6 @@ def batch_gradient(P, embedding, batch_size=10, indices=None,
         
     grad = np.empty(embedding.shape)
     stress = 0
-    #for start in range(0, n_samples, batch_size):
     batch_number = n_samples//batch_size
     start = 0; end = start+batch_size
     for i in range(batch_number):
@@ -195,13 +194,12 @@ def batch_gradient(P, embedding, batch_size=10, indices=None,
         P_batch = P[setup.batch_indices(batch_idx,n_samples)]
         dist = inverse_square_law_distances(embedding_batch)
         Q_batch = dist/(np.sum(dist))/(n_samples/len(batch_idx))**2
-        grad[batch_idx], st0 = grad_KL(P_batch,embedding_batch,
+        grad0, st0 = grad_KL(P_batch,embedding_batch,
                                        dist=dist,Q=Q_batch)
-        stress += st0
+        grad[batch_idx] = grad0*n_samples/(end-start)
+        stress += st0*n_samples/(end-start)
         start = end
         end = start + batch_size
-    grad *= n_samples/batch_size
-    stress *= n_samples/batch_size
     if estimate_cost is False:
         stress = KL(P, embedding)
     return grad, stress
@@ -212,7 +210,7 @@ class TSNE(object):
     """
     def __init__(self, data, dim=2, perplexity=30.0, estimate_cost=True,
                  sample_labels=None, sample_classes=None, sample_colors=None,
-                 verbose=0, indent='', **kwargs):
+                 edges=None, verbose=0, indent='', **kwargs):
         """\
         Initializes TSNE object.
 
@@ -220,17 +218,10 @@ class TSNE(object):
         ----------
 
         data : array or dictionary
-        Contains distances or dissimilarities among a set of objects.
-        Can be either of the following:
-
-        i) array, shape (N x N)
-        Distance/dissimilarity matrix
-        
-        ii) array, shape (N x dim)
-        Positions/featurs
-
-        iii) dictionary
-        See dissimilarities.py
+        Contains distances/dissimilarities among a set of objects.
+        Can be either a square distance matrix, a condence distance array, or
+        a feature array (in which case the distances are computed using the
+        euclidean distance, or another specified metric).
 
         dim : int > 0
         Embedding dimension.
@@ -238,30 +229,41 @@ class TSNE(object):
         perplexity : float > 0
         Perplexity used in determining the conditional probabilities p(i|j).
 
+        estimate_cost : booelan
+        If set to True (default), when a batch gradient descent is computed, the
+        current cost will only be estimated (which requires no extra 
+        computations).
+
+        sample_labels, sample_classes, sample_colors : list
+        Labels, classes, and colors for each sample. Used in plots.
+
         verbose : int >= 0
         Print status of methods in MDS object if verbose > 0.
 
         indent : str
         When printing, add indent before printing every new line.
         """
+        #verbose
         self.verbose = verbose
         self.indent = indent
         if self.verbose > 0:
             print(self.indent+'mview.TSNE():')
 
-        self.distances = setup.setup_distances(data, **kwargs)
-        self.n_samples = scipy.spatial.distance.num_obs_y(self.distances)
-
         #sample labels, classes, and colors
         self.sample_labels = sample_labels
         self.sample_classes = sample_classes
         self.sample_colors = sample_colors
-        
-        self.N = self.n_samples
-        self.D = self.distances
+        self.edges = edges
 
+        #setup distances and sample size
+        self.distances = setup.setup_distances(data, **kwargs)
+        self.n_samples = scipy.spatial.distance.num_obs_y(self.distances)
         assert isinstance(dim,int); assert dim > 0
         self.dim = dim
+
+        #remove when safe to do so: #########################################
+        self.N = self.n_samples
+        self.D = self.distances
 
         if verbose > 0:
             print(indent+'  data details:')
@@ -270,68 +272,60 @@ class TSNE(object):
             print(indent+f'    embedding dimension : {dim}')
             print(indent+f'    perplexity : {perplexity:0.2f}')
 
-        self.P = joint_probabilities(self.D,perplexity)
+        #compute joint probabilities
+        self.perplexity = perplexity
+        self.P = joint_probabilities(self.distances,perplexity)
 
+        #define objective and gradient functions
         self.objective = lambda X, P=self.P, **kwargs : KL(P,X)
-        def gradient(embedding,batch_size=None,indices=None,**kwargs):
+        def gradient(embedding, batch_size=None, indices=None, **kwargs):
             if batch_size is None or batch_size >= self.n_samples:
                 return grad_KL(self.P,embedding)
             else:
-                return batch_gradient(self.P,embedding,batch_size,indices,
+                return batch_gradient(self.P, embedding, batch_size, indices,
                                       estimate_cost=estimate_cost)
         self.gradient = gradient
 
+        #list with computation history
         self.computation_history = []
 
-        self.initialize()
+        #setup initial embedding and cost
+        self.initialize(**kwargs)
 
-    def set_sigma(self,sigma='optimal',perplexity=30.0):
-        if isinstance(sigma,numbers.Number):
-            assert sigma > 0
-            self.sigma = np.ones(self.N)*sigma
-        elif isinstance(sigma,np.ndarray):
-            assert sigma.shape == (self.N,)
-            assert all(sigma>0)
-            self.sigma = sigma
-        else:
-            assert sigma is 'optimal'
-            assert isinstance(perplexity,numbers.Number)
-            assert perplexity > 0
-            self.perplexity = perplexity
-            self.sigma = find_sigma(self.D,self.perplexity)
-
-    def initialize(self, X0=None, **kwargs):
+    def initialize(self, initial_embedding=None, **kwargs):
         """\
         Set initial embedding.
         """
         if self.verbose > 0:
             print(self.indent+'  TSNE.initialize():')
             
+        X0 = initial_embedding
         if X0 is None:
-            X0 = misc.initial_embedding(self.N,dim=self.dim,
-                                        radius=1,**kwargs)
-                                        #radius=self.D['rms'],**kwargs)
+            X0 = misc.initial_embedding(self.n_samples, dim=self.dim,
+                                        radius=1, **kwargs)
             if self.verbose > 0:
                 print(self.indent+'    method : random')
         else:
             assert isinstance(X0,np.ndarray)
-            assert X0.shape == (self.N,self.dim)
+            assert X0.shape == (self.n_samples,self.dim)
             if self.verbose > 0:
                 print(self.indent+'    method : initialization given')
             
         self.update(X0)
-        self.embedding0 = self.embedding.copy()
+        self.initial_embedding = X0
         
         if self.verbose > 0:
             print(self.indent+f'    initial cost : {self.cost:0.2e}')
         
     def update(self,X,H=None):
+        "update embedding, cost, computation history"
         self.embedding = X
         self.cost = self.objective(self.embedding)
         if H is not None:
             self.computation_history.append(H)   
 
     def gd(self, batch_size=None, lr=None, **kwargs):
+        "run gradient descent on current embedding"
         if self.verbose > 0:
             print(self.indent+'  TSNE.gd():')
             print(self.indent+'    specs:')
@@ -342,7 +336,7 @@ class TSNE(object):
             else:
                 lr = 100
 
-        if batch_size is None or batch_size >= self.n_samples:
+        if batch_size is None or batch_size<2 or batch_size>self.n_samples/2:
             Xi = None
             F = lambda embedding : self.gradient(embedding)
             if self.verbose > 0:
@@ -355,12 +349,12 @@ class TSNE(object):
                     'indices' : indices
                 }
                 return xi
-            F = lambda X, indices : self.gradient(X,batch_size,indices)
+            F = lambda X, indices : self.gradient(X, batch_size, indices)
             if self.verbose > 0:
                 print(self.indent+'      gradient type : batch')
-                print(self.indent+'      batch size :',batch_size)
+                print(self.indent+'      batch size :', batch_size)
 
-        X, H = gd.single(self.embedding,F,Xi=Xi, lr=lr,
+        X, H = gd.single(self.embedding, F, Xi=Xi, lr=lr,
                         verbose=self.verbose,
                         indent=self.indent+'    ',
                         **kwargs)
@@ -368,19 +362,20 @@ class TSNE(object):
         if self.verbose > 0:
             print(self.indent+f'    final stress : {self.cost:0.2e}')
 
-    def optimized(self, iters=[20,20,20,100], **kwargs):
+    def optimized(self, iters=50, **kwargs):
         "attempts to find best embedding"
         if self.verbose > 0:
             print(self.indent+'  TSNE.optimized():')
             self.indent+='  '
-        self.gd(batch_size=self.n_samples//50, max_iter=iters[0], scheme='mm')
-        self.gd(batch_size=self.n_samples//10, max_iter=iters[1], scheme='mm')
-        self.gd(batch_size=self.n_samples//5, max_iter=iters[2], scheme='mm')
-        self.gd(max_iter=iters[3],scheme='mm')
+
+        for divisor in [20,10,5,2]:
+            batch_size = max(5,min(500,self.n_samples//divisor))
+            self.gd(batch_size=batch_size, max_iter=20, scheme='mm')
+        self.gd(max_iter=iters,scheme='fixed')
         if self.verbose >0:
             self.indent = self.indent[0:-2]
             
-    def plot_embedding(self,title='', edges=False, colors=True, labels=None,
+    def plot_embedding(self,title='', edges=True, colors=True, labels=None,
                        axis=True, plot=True, ax=None, **kwargs):
         assert self.dim >= 2
         if ax is None:
@@ -388,11 +383,12 @@ class TSNE(object):
         else:
             plot = False
         if edges is True:
-            edges = self.D['edge_list']
-        elif edges is False:
-            edges = None
+            edges = self.edges
         if colors is True:
             colors = self.sample_colors
+        if isinstance(colors, int):
+            assert colors in range(self.n_samples)
+            colors = squareform(self.distances)[colors]            
         plots.plot2D(self.embedding,edges=edges,colors=colors,labels=labels,
                      axis=axis,ax=ax,title=title,**kwargs)
         if plot is True:
@@ -425,7 +421,7 @@ class TSNE(object):
         ax.set_title(title)
         if plot is True:
             plt.draw()
-            plt.pause(1.0)
+            plt.pause(0.1)
 
 ### COMPARISON ###
 
@@ -445,7 +441,7 @@ def sk_tsne():
     
 ### TESTS ###
 
-def basic(data,iters=[50,10,50,100],**kwargs):
+def basic(data, **kwargs):
     print()
     print('***mview.tsne.basic()***')
     print('description: a basic run of mview.TSNE on a sample dataset')
@@ -464,15 +460,28 @@ def basic(data,iters=[50,10,50,100],**kwargs):
     
     vis = TSNE(distances, verbose=2, indent='  ', **kwargs)
 
-    vis.optimized(iters,**kwargs)
+    vis.optimized(**kwargs)
     vis.plot_computations()
-    vis.plot_embedding(colors=True)
+    vis.plot_embedding()
     plt.show()
     
 if __name__=='__main__':
     print('\n***mview.tsne : running tests***\n')
-
-    #basic('clusters', n_samples=200, perplexity=30)
-    #basic('clusters', n_samples=400, n_clusters=8, perplexity=20)
-    #basic('clusters2', n_samples=400, n_clusters=3, perplexity=30)
-    basic('mnist', n_samples=500, digits=[0,1,2,3], perplexity=30)
+    
+    run_all_tsne=True
+    estimate_cost=False
+    if run_all_tsne:
+        basic('equidistant', n_samples=200,
+              estimate_cost=estimate_cost)
+        basic('disk', n_samples=300,
+              estimate_cost=estimate_cost)
+        basic('disk', n_samples=300, perplexity=100,
+              estimate_cost=estimate_cost)        
+        basic('clusters', n_samples=200,
+              estimate_cost=estimate_cost)
+        basic('clusters', n_samples=400, n_clusters=8,
+              estimate_cost=estimate_cost)
+        basic('clusters2', n_samples=400, n_clusters=3,
+              estimate_cost=estimate_cost)
+        basic('mnist', n_samples=500, digits=[0,1,2,3],
+              estimate_cost=estimate_cost)
