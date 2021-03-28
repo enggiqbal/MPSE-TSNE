@@ -8,10 +8,11 @@ import scipy.spatial.distance
 import misc, setup, multigraph, gd, projections, mds, tsne, plots, mpse, samples
 from mpse import MPSE
 from tsne import TSNE
+import evaluate
 
 def mpse_tsne(data, perplexity=30,
               iters=100, lr=[20,0.1],
-              estimate_cost=True,
+              estimate_cost=True, evaluate=False,
               verbose=0, show_plots=False, save_results = False,**kwargs):
     "Runs MPSE optimized for tsne"
     if verbose>0:
@@ -42,20 +43,64 @@ def mpse_tsne(data, perplexity=30,
     for divisor in [20,10,5]:
         batch_size = max(5,min(500,n_samples//divisor))
         mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
+    mv.gd(max_iter=iters, batch_size=int(n_samples/2), scheme='mm')
     #mv.gd(max_iter=20, scheme='bb')
     #mv.gd(max_iter=iters, scheme='fixed')
-    mv.gd(max_iter=iters, batch_size=int(n_samples/2), scheme='mm')
+
+    if evaluate is True:
+        mv.evaluate()
         
     #save outputs:
     if save_results is True:
         mv.save()
 
+    #plots:
     if show_plots is True:
         mv.plot_computations()
         mv.plot_embedding()
         mv.plot_images(**kwargs)
         plt.show()
+        
     return mv
+
+def compare_tsne(data,
+                 estimate_cost=True, evaluate=False,
+                 save_results=False, show_plots=True, **kwargs):
+    "compares mpse-tsne to regular tsne"
+    
+    #load/prepare distances and other variables from data
+    if isinstance(data,str):
+        import samples
+        distances, lkwargs = samples.load(data, dataset_type='both', **kwargs)
+    else:
+        distances = data
+        lkwargs = [kwargs]*(len(data)+1)
+
+    results = []
+    n_perspectives = len(distances)
+    for i in range(n_perspectives):
+        kwargsi = lkwargs[i+1]
+        for key, value in kwargs.items():
+            kwargsi[key] = value
+        ts = TSNE(distances[i], **kwargsi)
+        ts.optimized()
+        if evaluate is True:
+            ts.evaluate()
+        results.append(ts)
+        if show_plots:
+            ts.plot_embedding()
+    kwargs0 = lkwargs[0]
+    for key, value in kwargs.items():
+        kwargs0[key] = value     
+    mv=mpse_tsne(distances,
+                 estimate_cost=estimate_cost, evaluate=evaluate,
+                 **kwargs0)
+    results.insert(0,mv)
+    if show_plots:
+        mv.plot_embedding()
+        mv.plot_images()
+        plt.show()
+    return results
 
 def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
     "runs mpse_tsne on the same perspective w/ different perplexity values"
@@ -75,7 +120,6 @@ def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
         ts.optimized()
         ts.plot_embedding()
         print(ts.cost)
-
         
     distances = [distances]*len(perplexities)
 
@@ -127,31 +171,44 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
 
 if __name__=='__main__':
     estimate_cost=False
-    run_all_mpse_tsne = True
-    #compare_perplexity('clusters', n_samples=200, n_clusters=3,
-    #                   perplexities=[15,100])
-    #mpse_tsne('clusters', n_clusters=3, perplexity=30, n_perspectives=4,
-    #          show_plots=True)
-    mpse_tsne('phishing',
-              estimate_cost=estimate_cost,verbose=2,show_plots=True)
+    evaluate=True
 
+    run_all_mpse_tsne = True
     if run_all_mpse_tsne is True:
         mpse_tsne('equidistant',
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('disk', n_perspectives=10,
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('clusters', n_clusters=[3,4,2],
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('clusters2', n_clusters=2, n_perspectives=4, perplexity=80,
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('florence', perplexity = 40,
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('123', n_samples=500, perplexity = 460,
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('mnist',n_samples=500,perplexity=30,
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('mnist',n_samples=500,perplexity=100,
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
         mpse_tsne('phishing',
-                  estimate_cost=estimate_cost,verbose=2,show_plots=True)
+                  estimate_cost=estimate_cost,evaluate=evaluate,
+                  verbose=2,show_plots=True)
+
+    run_all_compare_tsne = True
+    if run_all_compare_tsne is True:
+        compare_tsne('clusters', n_samples=400, n_perspectives=2,
+                     evaluate=True)
+        
+    run_all_compare_perplexity = True
+    if run_all_compare_perplexity is True:
+        compare_perplexity('clusters2', n_samples=400, perplexities=[10,200])
     

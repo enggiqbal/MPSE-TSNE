@@ -6,6 +6,7 @@ directory = os.path.dirname(os.path.realpath(__file__))
 data, meta = arff.loadarff(directory+'/dataset.arff')
 df = pd.DataFrame(data)
 results = df['Result'].to_numpy()
+results = [1 if l > 0 else 0 for l in results]
 n_samples, n_attributes = df.shape
 
 group_names = [

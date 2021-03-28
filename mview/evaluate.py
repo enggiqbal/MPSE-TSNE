@@ -38,6 +38,7 @@ def separation_error0(X, y, show_plot=False):
 def separation_error(coordinates, labels, return_individual_errors=False,
                      show_plot=False):
     "returns all separation errors"
+    labels = np.array(labels)
     errors = []
     n_samples = len(coordinates)
     n_classes = np.max(labels)+1

@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.spatial.distance
 from scipy.spatial.distance import squareform
 
-import misc, setup, multigraph, gd, projections, mds, tsne, plots
+import misc, setup, multigraph, gd, projections, mds, tsne, plots, evaluate
 
 class MPSE(object):
     """\
@@ -577,14 +577,33 @@ class MPSE(object):
             costs = ', '.join(f'{x:0.2f}' for x in self.individual_cost)
             print(self.indent+f'    individual costs : {costs}')
 
-    def optimized(self, iters=[40,40,40,100], **kwargs):
-        "find optimal solution"
-        if self.verbose > 0:
-            print(self.indent+'  MPSE.optimized():')
-        self.gd(batch_size=self.n_samples//20, max_iter=iters[0], scheme='mm')
-        self.gd(batch_size=self.n_samples//10, max_iter=iters[1], scheme='mm')
-        self.gd(batch_size=self.n_samples//5, max_iter=iters[2], scheme='mm')
-        self.gd(max_iter=iters[3],scheme='bb')
+    def evaluate(self):
+        if self.sample_classes is not None:
+            Y = self.embedding; labels = self.sample_classes
+            sep = evaluate.separation_error(Y, labels)
+            self.separation = sep
+        else:
+            self.separation = None
+        if self.image_classes is not None:
+            self.image_separation = []
+            for Y, labels in zip(self.images,self.image_classes):
+                sep = evaluate.separation_error(Y, labels)
+                self.image_separation.append(sep)
+        elif self.sample_classes is not None:
+            self.image_separation = []
+            labels = self.sample_classes
+            for Y in self.images:
+                sep = evaluate.separation_error(Y, labels)
+                self.image_separation.append(sep)
+        else:
+            self.image_separation = None
+        if self.verbose>0:
+            if self.separation is not None:
+                print(self.indent+'  ','MPSE.evaluate(): separation:',
+                      self.separation)
+            if self.image_separation is not None:
+                print(self.indent+'  ','MPSE.evaluate(): image separation:',
+                      self.image_separation)
  
     def plot_embedding(self,title=None,perspectives=True,edges=None,colors=True,
                 plot=True,ax=None,**kwargs):

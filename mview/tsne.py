@@ -7,7 +7,7 @@ import scipy.spatial.distance
 from scipy.spatial.distance import squareform
 MACHINE_EPSILON = np.finfo(np.double).eps
 
-import misc, gd, plots, setup
+import misc, gd, plots, setup, evaluate
 
 ### joint probabilities from distances ###
 
@@ -374,6 +374,14 @@ class TSNE(object):
         self.gd(max_iter=iters,scheme='fixed')
         if self.verbose >0:
             self.indent = self.indent[0:-2]
+
+    def evaluate(self):
+        if self.sample_classes is not None:
+            Y = self.embedding; labels = self.sample_classes
+            sep = evaluate.separation_error(Y, labels)
+            self.separation = sep
+        else:
+            self.separation = None
             
     def plot_embedding(self,title='', edges=True, colors=True, labels=None,
                        axis=True, plot=True, ax=None, **kwargs):

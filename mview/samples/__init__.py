@@ -71,7 +71,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         length = n_samples*(n_samples-1)//2
         for persp in range(n_perspectives):      
             distances.append(np.random.normal(1,0.1,length))
-        data['image_colors'] = n_samples-1
+        data['image_colors'] = [n_samples-1]*n_perspectives
     elif dataset == 'disk':
         import misc, projections
         X = misc.disk(n_samples, dim=3)
@@ -82,7 +82,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['true_embedding'] = X
         data['true_projections'] = Q
         distances = Y
-        data['image_colors'] = 0
+        data['image_colors'] = [0]*n_perspectives
     elif dataset == 'disk2':
         import misc, projections
         X = misc.disk(n_samples, dim=3)
@@ -130,6 +130,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         for persp in range(n_perspectives):
             d, c = clusters2(n_samples,n_clusters[persp])
             distances.append(d); data['image_colors'].append(c)
+        data['image_classes'] = data['image_colors']
     elif dataset == '123':
         import projections
         X = np.genfromtxt(directory+'/123/123.csv',delimiter=',')[0:n_samples]
@@ -142,7 +143,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['true_embedding'] = X
         data['true_projections'] = Q
         data['true_images'] = [X1,X2,X3]
-        data['image_colors'] = 0
+        data['image_colors'] = [0]*3
     elif dataset == 'florence':
         import florence
         distances, dictf = florence.setup()
@@ -173,6 +174,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         distances = Y
         data['sample_colors'] = sample_colors
         data['perspective_labels'] = perspective_labels
+        data['sample_classes'] = sample_colors
     elif dataset == 'mnist':
         X, data['sample_classes'] = mnist(n_samples, **kwargs)
         data['features'] = X
@@ -181,3 +183,26 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
     else:
         print('***dataset not found***')
     return distances, data
+
+def load(dataset, dataset_type='multiple',**kwargs):
+    "loads dataset for single or multiple or both perspectives"
+    if dataset_type=='single':
+        return sload(dataset, **kwargs)
+    elif dataset_type=='multiple':
+        return mload(dataset, **kwargs)
+    elif dataset_type=='both':
+        distances, kwargs0 = mload(dataset, **kwargs)
+        n_perspectives = len(distances)
+        kwargs = [kwargs0]
+        for i in range(n_perspectives):
+            kwargsi = kwargs0.copy()
+            if 'image_colors' in kwargsi:
+                kwargsi['sample_colors']=kwargsi['image_colors'][i]
+            if 'image_labels' in kwargsi:
+                kwargsi['sample_labels']=kwargsi['image_labels'][i]
+            if 'image_colors' in kwargsi:
+                kwargsi['sample_classes']=kwargsi['image_classes'][i]
+            kwargs.append(kwargsi)
+        return distances, kwargs
+    else:
+        return
