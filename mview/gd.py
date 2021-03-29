@@ -106,7 +106,7 @@ def mm(x,dfx,df0x=None,x0=0,df0x0=0,p=None,y=0,ndx=None,lr=10,theta=np.Inf,
         L = nddfx/ndx
         lr0 = lr
         #lr = min(math.sqrt(1+theta)*lr,1/(alpha*L))
-        lr = max(min(math.sqrt(1+theta)*lr,1/(alpha*L)),3*lr/4)
+        lr = max(min(math.sqrt(1+theta)*lr,1/(alpha*L),1e5),3*lr/4,1e-5)
         theta = lr/lr0
         dx = -lr*dfx
         ndx = np.linalg.norm(dx)

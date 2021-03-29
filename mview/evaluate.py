@@ -33,9 +33,7 @@ def separation_error0(X, y, show_plot=False):
 
     error = min(np.linalg.norm([1]*len(predicted) - predicted - y),
                 np.linalg.norm(predicted - y))
-    print(predicted)
-    print(y)
-    print(X)
+    
     return error**2/len(X)
 
 def separation_error(coordinates, labels, return_individual_errors=False,

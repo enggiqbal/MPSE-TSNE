@@ -126,7 +126,7 @@ def KL(P,embedding):
 
     # compute kl divergence
     kl_divergence = 2.0 * np.dot(
-        P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+        P, np.log(np.maximum(P/Q, MACHINE_EPSILON)))
         
     return kl_divergence
 
@@ -160,7 +160,7 @@ def grad_KL(P,embedding,dist=None,Q=None):
         Q = np.maximum(dist/(np.sum(dist)), MACHINE_EPSILON)
     
     kl_divergence = 2.0 * np.dot(
-        P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+        P, np.log(np.maximum(P/Q, MACHINE_EPSILON)))
 
     grad = np.ndarray(embedding.shape)
     PQd = scipy.spatial.distance.squareform((P-Q)*dist)
