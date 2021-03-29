@@ -118,7 +118,7 @@ def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
     for p in perplexities:
         ts = TSNE(distances,perplexity=p, **kwargs)
         ts.optimized()
-        ts.plot_embedding()
+        ts.plot_embedding(plot=True,axis=False)
         print(ts.cost)
         
     distances = [distances]*len(perplexities)
@@ -142,27 +142,8 @@ def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
     print(mv.individual_cost)
         
     mv.plot_computations()
-    mv.plot_embedding(title='final embeding')
-    mv.plot_images()
-    plt.draw()
-    plt.pause(0.2)
-    plt.show()
-    
-    return
-
-def compare_mds_tsne(dataset='mnist', perplexity=30):
-    data = samples.load(dataset)
-    D = [data['X']]*2
-    va = {'perplexity':perplexity}
-    mv = MPSE(D,visualization_method=['mds','tsne'],
-              visualization_args=va,
-              colors=data['colors'],verbose=2)
-
-    mv.gd()
-        
-    mv.plot_computations()
-    mv.plot_embedding(title='final embeding')
-    mv.plot_images()
+    mv.plot_embedding()
+    mv.plot_images(plot=True,axis=False)
     plt.draw()
     plt.pause(0.2)
     plt.show()
@@ -171,12 +152,10 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
 
 if __name__=='__main__':
 
-    mpse_tsne('mnist',n_samples=200,perplexity=30,
-              estimate_cost=False,evaluate=True,
-              verbose=2,show_plots=True)
     estimate_cost=True
     evaluate=True
-    run_all_mpse_tsne = True
+    
+    run_all_mpse_tsne = False
     if run_all_mpse_tsne is True:
         mpse_tsne('equidistant',
                   estimate_cost=estimate_cost,evaluate=evaluate,
@@ -206,12 +185,13 @@ if __name__=='__main__':
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
 
-    run_all_compare_tsne = True
+    run_all_compare_tsne = False
     if run_all_compare_tsne is True:
         compare_tsne('clusters', n_samples=400, n_perspectives=2,
-                     evaluate=True)
+                     evaluate=True, verbose=2)
         
     run_all_compare_perplexity = True
     if run_all_compare_perplexity is True:
-        compare_perplexity('clusters2', n_samples=400, perplexities=[10,200])
+        compare_perplexity('clusters2', n_samples=300,
+                           perplexities=[10,100])
     

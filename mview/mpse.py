@@ -20,7 +20,7 @@ class MPSE(object):
                  fixed_embedding=None, fixed_projections=None,
                  initial_embedding=None, initial_projections=None,
                  visualization_method='mds', visualization_args={},
-                 total_cost_function='rms',
+                 total_cost_function='rms', perspective_weights=None,
                  embedding_dimension=3, image_dimension=2,
                  projection_family='linear',projection_constraint='orthogonal',
                  hidden_samples=None,
@@ -132,6 +132,8 @@ class MPSE(object):
             data, data_args)
         self.n_perspectives = len(self.distances)
         self.n_samples = scipy.spatial.distance.num_obs_y(self.distances[0])
+
+        self.perspective_weights = perspective_weights
 
         ##set up weights from data
         if isinstance(weights,list) or isinstance(weights, np.ndarray):
@@ -269,6 +271,9 @@ class MPSE(object):
                 for k in range(self.n_perspectives):
                     dY_k, cost_k = self.visualization[k].gradient(
                         Y[k],batch_size=batch_size,indices=indices)
+                    if perspective_weights is not None:
+                        dY_k *= perspective_weights[k]
+                        #cost_k *= perspective_weights[k]**0.5
                     individual_costs[k] = cost_k
                     if return_embedding:
                         dX += dY_k @ projections[k]
