@@ -170,12 +170,11 @@ def compare_mds_tsne(dataset='mnist', perplexity=30):
     return
 
 if __name__=='__main__':
-    mpse_tsne('clusters', n_clusters=[2,5],
-              evaluate=True, n_perspectives=7,
-              verbose=2,show_plots=True)
 
-    
-    estimate_cost=False
+    mpse_tsne('mnist',n_samples=200,perplexity=30,
+              estimate_cost=False,evaluate=True,
+              verbose=2,show_plots=True)
+    estimate_cost=True
     evaluate=True
     run_all_mpse_tsne = True
     if run_all_mpse_tsne is True:
@@ -194,13 +193,13 @@ if __name__=='__main__':
         mpse_tsne('florence', perplexity = 40,
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
-        mpse_tsne('123', n_samples=500, perplexity = 460,
+        mpse_tsne('123', n_samples=300, perplexity = 460,
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
-        mpse_tsne('mnist',n_samples=500,perplexity=30,
+        mpse_tsne('mnist',n_samples=400,perplexity=30,
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
-        mpse_tsne('mnist',n_samples=500,perplexity=100,
+        mpse_tsne('mnist',n_samples=400,perplexity=100,
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
         mpse_tsne('phishing',

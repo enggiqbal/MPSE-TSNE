@@ -475,7 +475,9 @@ def basic(data, **kwargs):
     
 if __name__=='__main__':
     print('\n***mview.tsne : running tests***\n')
-    
+
+    basic('disk', dim=3, n_samples=300,
+          estimate_cost=True)
     run_all_tsne=True
     estimate_cost=False
     if run_all_tsne:

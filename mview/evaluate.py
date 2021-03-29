@@ -8,7 +8,7 @@ def separation_error0(X, y, show_plot=False):
     from sklearn.datasets import make_blobs
     
     # fit the model, don't regularize for illustration purposes
-    clf = svm.SVC(kernel='linear', C=1000)
+    clf = svm.SVC(kernel='linear')#, C=1000)
     clf.fit(X, y)
     predicted = clf.predict(X)
     
@@ -33,6 +33,9 @@ def separation_error0(X, y, show_plot=False):
 
     error = min(np.linalg.norm([1]*len(predicted) - predicted - y),
                 np.linalg.norm(predicted - y))
+    print(predicted)
+    print(y)
+    print(X)
     return error**2/len(X)
 
 def separation_error(coordinates, labels, return_individual_errors=False,
@@ -45,9 +48,12 @@ def separation_error(coordinates, labels, return_individual_errors=False,
     assert n_classes > 1
     for i in range(n_classes):
         for j in range(i+1,n_classes):
-            indices = [k for k in range(n_samples) if labels[k] in [i,j]]
-            X = coordinates[indices]
-            y = labels[indices]
+            #indices = [k for k in range(n_samples) if labels[k] in [i,j]]
+            #X = coordinates[indices]
+            indices0 = [k for k in range(n_samples) if labels[k]==i]
+            indices1 = [k for k in range(n_samples) if labels[k]==j]
+            X = np.concatenate((coordinates[indices0],coordinates[indices1]))
+            y = [0]*len(indices0)+[1]*len(indices1)
             errors.append(separation_error0(X,y,show_plot))
     if show_plot:
         plt.show()
