@@ -787,6 +787,10 @@ class MPSE(object):
         if self.sample_classes is not None:
             np.savetxt(location+'sample_classes.csv', self.sample_classes,
                        fmt='%d')
+        if self.image_classes is not None:
+            for i in range(self.n_perspectives):
+                np.savetxt(location+'image_classes_'+str(i)+'.csv',
+                           self.image_classes[i])
 
 ##### TESTS #####
 
