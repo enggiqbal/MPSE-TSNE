@@ -115,13 +115,18 @@ def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
     else:
         distances = data
 
-    for p in perplexities:
+    #prepare figures
+    K = len(perplexities)
+    fig, ax = plt.subplots(2,K, figsize=(3*K,3))
+
+    for i,p in enumerate(perplexities):
         ts = TSNE(distances,perplexity=p, **kwargs)
         ts.optimized()
-        ts.plot_embedding(plot=True,axis=False)
-        print(ts.cost)
+        ts.plot_embedding(axis=False,ax=ax[0,i])
+        print('tsne cost for perspective',i,':',ts.cost)
         
     distances = [distances]*len(perplexities)
+
 
     va = []
     for p in perplexities:
@@ -131,19 +136,21 @@ def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
               verbose=0,**kwargs)
 
     #search for global minima
-    n_samples=200
-    mv.gd(fixed_projections=True, max_iter=50, batch_size=min(25,n_samples//2),
+    #search for global minima
+    n_samples = mv.n_samples
+    mv.gd(fixed_projections=True, max_iter=10, batch_size=min(25,n_samples//2),
           scheme='mm')
-    for divisor in [20,10,5,2]:
+    for divisor in [20,10,5]:
         batch_size = max(5,min(500,n_samples//divisor))
         mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
-    #mv.gd(max_iter=20, scheme='mm')
-    mv.gd(max_iter=iters, scheme='fixed')
+    mv.gd(max_iter=iters, batch_size=int(n_samples/2), scheme='mm')
     print(mv.individual_cost)
-        
+
+    mv.plot_images(axis=False, ax=ax[1])
+    plt.axis('equal')
     mv.plot_computations()
     mv.plot_embedding()
-    mv.plot_images(plot=True,axis=False)
+
     plt.draw()
     plt.pause(0.2)
     plt.show()
@@ -152,8 +159,14 @@ def compare_perplexity(data, perplexities=[30,200],iters=50, **kwargs):
 
 if __name__=='__main__':
 
+
+
     estimate_cost=True
     evaluate=True
+
+    mpse_tsne('clusters', n_clusters=[3,4,2], save_results=True,
+              estimate_cost=estimate_cost,evaluate=evaluate,
+              verbose=2,show_plots=True)
     
     run_all_mpse_tsne = False
     if run_all_mpse_tsne is True:
@@ -190,8 +203,9 @@ if __name__=='__main__':
         compare_tsne('clusters', n_samples=400, n_perspectives=2,
                      evaluate=True, verbose=2)
         
-    run_all_compare_perplexity = True
+    run_all_compare_perplexity = False
     if run_all_compare_perplexity is True:
         compare_perplexity('clusters2', n_samples=300,
-                           perplexities=[10,100])
+                           perspective_weights=None,
+                           perplexities=[10,200])
     
