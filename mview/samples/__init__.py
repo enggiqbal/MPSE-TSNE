@@ -19,7 +19,19 @@ def mnist(n_samples=1000, digits=None, **kwargs):
     assert(len(X_train)) >= len(indices)
     X = X_train[indices]
     labels = Y_train[indices]
+
     X = X.reshape(len(indices),28*28)
+
+    #save original:
+    "save results to csv files"
+    location=directory+'/../temp2/'
+    if not os.path.exists(location):
+        os.makedirs(location)
+    for f in os.listdir(location):
+        os.remove(os.path.join(location,f))
+    np.savetxt(location+'mnist_original_images.csv',X)
+    np.savetxt(location+'mnist_original_labels.csv',labels)
+    
     X = np.array(X,dtype='float')/256
     return X, labels
 
