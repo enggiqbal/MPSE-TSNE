@@ -75,11 +75,32 @@ class Exp:
                     print("scaping")
         df=pd.DataFrame(final_results, columns=['n_samples','exp_num','n_perspectives','n_clusters','separation_error','time'])
         df.to_csv(filename, index=False)
- 
+    def exp3(self, filename):
+        n_sample=400
+        n_clusters=2
+        perplexitys=[40, 80, 160, 240]
+        final_results=[]
+        for perplexity in perplexitys:
+            for n_perspectives in tqdm(range( 2, 11)):
+                i=0
+                while(i<5):
+                    t=time.time()
+                    results = mview.mpse_tsne('clusters',evaluate=True, n_samples=n_sample,  n_perspectives=n_perspectives, perplexity=perplexity,  show_plots=False, verbose=0)
+                    if math.isnan( results.images[0][0][0]) ==False:
+                        e2= results.image_separation
+                        e=np.mean(e2)
+                        final_results.append([n_sample,i,n_perspectives,n_clusters,perplexity,e, results.time ])
+                        print(final_results[-1], "time", time.time() -t )
+                        i=i+1
+                    else:
+                        print("scaping")
+        df=pd.DataFrame(final_results, columns=['n_samples','exp_num','n_perspectives','n_clusters','perplexity','separation_error','time'])
+        df.to_csv(filename, index=False)
 if __name__=="__main__":
     e=Exp()
     # e.exp1("two_clusters_2_0.6.csv",0.6,2)
     # e.exp1("two_clusters_2_0.2.csv",0.2,2)
     # e.exp1("two_clusters_3_0.2.csv",0.2,3)
-    e.exp2("disk_0.6.csv")
+    # e.exp2("disk_0.6.csv")
+    e.exp3("perspectives2.csv")
  
