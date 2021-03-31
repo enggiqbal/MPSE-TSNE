@@ -39,4 +39,46 @@ def two_clusters():
     plt.xlabel("Data Points")
     plt.savefig("time_exp.png")
  
-two_clusters()
+# two_clusters()
+def cluster_x_fixed_point():
+    df=pd.read_csv("clusters_2_fixed_point.csv")
+    df=df[['perplexity'  ,'n_clusters',   'separation_error']]
+    df=df.groupby(by=["perplexity","n_clusters"]).mean().reset_index()
+
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==40], marker='x', label="Perp 40  Pers 2" )
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==80],  marker='o' ,label="Perp 80  Pers 2")
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==160], marker='*' ,  label="Perp 160  Pers 2")
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==240],  marker='s',  label="Perp 240  Pers 2")
+
+    df=pd.read_csv("clusters_3_fixed_point.csv")
+    df=df[['perplexity'  ,'n_clusters',   'separation_error']]
+    df=df.groupby(by=["perplexity","n_clusters"]).mean().reset_index()
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==40], marker='x', label="Perp 40  Pers 3" )
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==80],  marker='o' ,label="Perp 80  Pers 3")
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==160], marker='*' ,  label="Perp 160  Pers 3")
+    plt.plot( 'n_clusters', 'separation_error', data=df[df['perplexity']==240],  marker='s',  label="Perp 240  Pers 3")
+
+    plt.ylabel("Separation Error in %")
+    plt.xlabel("# Clusters")
+    plt.legend()
+    plt.savefig("cluster_x_fixed_point.png")
+
+# cluster_x_fixed_point()
+
+
+def disk_06():
+    df=pd.read_csv("disk_0.6.csv")
+    df=df[['n_perspectives' , 'separation_error' ]]
+    df=df.groupby(by=["n_perspectives"]).mean().reset_index()
+    plt.plot( 'n_perspectives', 'separation_error', data=df,  marker='s',  label="xx")
+    axes = plt.gca()
+ 
+    axes.set_ylim([0,0.05])
+   
+    plt.ylabel("Separation Error in %")
+    plt.xlabel("# Perspectives")
+    # plt.legend()
+    plt.savefig("disk.png")
+
+disk_06()
+
