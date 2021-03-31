@@ -68,12 +68,12 @@ class Exp:
                     if math.isnan( results.images[0][0][0]) ==False:
                         e2= results.image_separation
                         e=np.mean(e2)
-                        final_results.append([n_sample,i,n_perspectives,n_clusters,e, results.time ])
+                        final_results.append([perplexity,n_sample,i,n_perspectives,n_clusters,e, results.time ])
                         print(final_results[-1], "time", time.time() -t )
                         i=i+1
                     else:
                         print("scaping")
-        df=pd.DataFrame(final_results, columns=['n_samples','exp_num','n_perspectives','n_clusters','separation_error','time'])
+        df=pd.DataFrame(final_results, columns=['perplexity','n_samples','exp_num','n_perspectives','n_clusters','separation_error','time'])
         df.to_csv(filename, index=False)
 
     def exp2(self, filename):
