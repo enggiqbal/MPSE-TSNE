@@ -91,3 +91,30 @@ def createClusters(numbPoints, numbPerspectives):
         labels.append(currlabels)
 
     return retClusters, labels
+
+def narrow(n_samples, n_perspectives=2, inner_distance=1.0,
+           outer_distance=2.0, noise=0.1, **kwargs):
+    "distances defined similar to those of Iqbal nlp data"
+    
+    length = n_samples*(n_samples-1)//2
+    distances = []
+    labels = np.empty(n_samples, dtype=int)
+    
+    permutation = np.random.permutation(n_samples)
+    cluster_size= n_samples//n_perspectives
+    start=0
+    end=start+cluster_size
+    for i in range(n_perspectives):
+        if i < n_samples%n_perspectives:
+            end+=1
+        d = np.random.normal(outer_distance, noise, length)
+        indices = np.sort(permutation[start:end])
+        labels[indices] = i
+        pairs = np.array(list(itertools.combinations(indices,2)))
+        indices = n_samples*pairs[:,0]-pairs[:,0]*(pairs[:,0]+1)//2 + \
+        pairs[:,1]-1-pairs[:,0]
+        d[indices] = np.random.normal(inner_distance,noise,len(indices))
+        distances.append(d)
+        start = end
+        end = start+cluster_size
+    return distances, labels

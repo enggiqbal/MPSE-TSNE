@@ -93,7 +93,7 @@ labels[strozzi] = 'Strozzi'
 def setup():
     dictionary = {
         'edges' : edges,
-        'labels' : labels,
+        'sample_labels' : labels,
         'image_colors' : medici
         }
     return reduced_distances, dictionary

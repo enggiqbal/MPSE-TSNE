@@ -52,7 +52,7 @@ def joint_probabilities(distances, perplexity):
                 print('nan found')
             if np.sum(P_i) == 0:
                 print('adds to 0')
-            P_i /= np.sum(P_i)
+            P_i /= np.maximum(np.sum(P_i),MACHINE_EPSILON)
             #compute perplexity w.r.t sample i:
             HP_i = -np.dot(P_i,np.log2(P_i+MACHINE_EPSILON))
             PerpP_i = 2**(HP_i)
@@ -193,7 +193,8 @@ def batch_gradient(P, embedding, batch_size=10, indices=None,
         embedding_batch = embedding[batch_idx]
         P_batch = P[setup.batch_indices(batch_idx,n_samples)]
         dist = inverse_square_law_distances(embedding_batch)
-        Q_batch = dist/(np.sum(dist))/(n_samples/len(batch_idx))**2
+        Q_batch = np.maximum(dist/(np.sum(dist)), MACHINE_EPSILON) \
+            /(n_samples/len(batch_idx))**2
         grad0, st0 = grad_KL(P_batch,embedding_batch,
                                        dist=dist,Q=Q_batch)
         grad[batch_idx] = grad0*n_samples/(end-start)
@@ -476,7 +477,7 @@ def basic(data, **kwargs):
 if __name__=='__main__':
     print('\n***mview.tsne : running tests***\n')
 
-    basic('disk', dim=3, n_samples=300,
+    basic('pride', n_samples=300, perplexity=20,
           estimate_cost=True)
     run_all_tsne=True
     estimate_cost=False

@@ -666,7 +666,8 @@ class MPSE(object):
                 colors_k = scipy.spatial.distance.squareform(self.distances[k])[colors_k]
 
             plots.plot2D(self.images[k],edges=edges[k],colors=colors_k,ax=ax[k],
-                    weight=self.weights[k], **kwargs)
+                    weight=self.weights[k],
+                         labels = self.sample_labels, **kwargs)
             #ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
         plt.suptitle(title)
         if plot is True:

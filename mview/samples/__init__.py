@@ -36,7 +36,7 @@ def mnist(n_samples=1000, digits=None, **kwargs):
     return X, labels
 
 def sload(dataset, n_samples=200, **kwargs):
-    
+    "returns a distance array and dictionary with aditional features"
     data = {}
     if dataset == 'equidistant':
         length = n_samples*(n_samples-1)//2
@@ -47,6 +47,11 @@ def sload(dataset, n_samples=200, **kwargs):
         distances = misc.disk(n_samples, dim=2)
         data['features'] = distances
         data['sample_colors'] = n_samples-1
+    elif dataset == 'disk2':
+        import misc
+        distances = misc.disk(n_samples, dim=2)
+        data['features'] = distances
+        data['sample_colors'] = [0 if distances[i,0]<0 else 1 for i in range(n_samples)]
     elif dataset == 'clusters':
         from clusters import clusters
         if 'n_clusters' in kwargs:
@@ -65,10 +70,19 @@ def sload(dataset, n_samples=200, **kwargs):
         distances, sc = clusters2(n_samples, n_clusters=n_clusters, **kwargs)
         data['sample_classes'] = sc
         data['sample_colors'] = data['sample_classes']
+    elif dataset == 'narrow':
+        from clusters import narrow
+        d, data['sample_classes'] = narrow(n_samples, n_perspectives=2)
+        distances = d[0]
+        data['sample_colors'] = data['sample_classes']
     elif dataset == 'mnist':
         data['features'], data['sample_classes'] = mnist(**kwargs)
         distances = data['features']
         data['sample_colors'] = data['sample_classes']
+    elif dataset in ['pride','pride_and_prejudice']:
+        import pride_and_prejudice
+        distances = pride_and_prejudice.distances[2]
+        data['edges'] = pride_and_prejudice.edges[2]
     else:
         print('***dataset not found***')
 
@@ -143,6 +157,10 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
             d, c = clusters2(n_samples,n_clusters[persp])
             distances.append(d); data['image_colors'].append(c)
         data['image_classes'] = data['image_colors']
+    elif dataset == 'narrow':
+        from clusters import narrow
+        distances, data['sample_classes'] = narrow(n_samples, n_perspectives)
+        data['sample_colors'] = data['sample_classes']
     elif dataset == '123':
         import projections
         X = np.genfromtxt(directory+'/123/123.csv',delimiter=',')[0:n_samples]
@@ -192,6 +210,11 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         data['features'] = X
         distances = [X[:,0:28*14],X[:,28*14::]]
         data['sample_colors'] = data['sample_classes'].copy()
+    elif dataset in ['pride','pride_and_prejudice']:
+        import pride_and_prejudice
+        distances = pride_and_prejudice.distances
+        data['edges'] = pride_and_prejudice.edges
+        data['sample_labels'] = pride_and_prejudice.names
     else:
         print('***dataset not found***')
     return distances, data
