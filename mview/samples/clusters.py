@@ -118,3 +118,29 @@ def narrow(n_samples, n_perspectives=2, inner_distance=1.0,
         start = end
         end = start+cluster_size
     return distances, labels
+
+def narrow2(n_samples, inner_distance=1.0, outer_distance=2.0, noise=0.1,
+            **kwargs):
+    "distances similar to narrow but sharing points"
+
+    lonely = math.floor(2*n_samples/5) # number of points only in one cluster
+    shared = n_samples-2*lonely # number of points shared by clusters
+    clustered = lonely+shared # number of poitns in larger cluster
+
+    distance0 = np.random.normal(outer_distance, noise, (n_samples, n_samples))
+    distance0[0:clustered,0:clustered] = \
+        np.random.normal(inner_distance, noise, (clustered, clustered))
+    labels0 = [0]*clustered+[1]*lonely
+
+    distance1 = \
+        np.random.normal(outer_distance, noise, (n_samples, n_samples))
+    distance1[lonely::, lonely::] = \
+        np.random.normal(inner_distance, noise, (clustered, clustered))
+    labels1 = [0]*lonely+[1]*clustered
+
+    distances = [distance0, distance1]
+    image_classes = [labels0, labels1]
+
+    sample_colors = [0]*lonely+[0.5]*shared+[1]*lonely
+
+    return distances, image_classes, sample_colors

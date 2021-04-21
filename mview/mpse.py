@@ -641,6 +641,8 @@ class MPSE(object):
         if ax is None:
             fig, ax = plt.subplots(1,self.n_perspectives,
                                    figsize=(3*self.n_perspectives,3))
+            if self.n_perspectives==1:
+                ax = [ax]
         else:
             plot = False
 

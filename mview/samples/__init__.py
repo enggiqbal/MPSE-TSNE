@@ -51,7 +51,8 @@ def sload(dataset, n_samples=200, **kwargs):
         import misc
         distances = misc.disk(n_samples, dim=2)
         data['features'] = distances
-        data['sample_colors'] = [0 if distances[i,0]<0 else 1 for i in range(n_samples)]
+        data['sample_colors'] = \
+            [0 if distances[i,0]<0 else 1 for i in range(n_samples)]
     elif dataset == 'clusters':
         from clusters import clusters
         if 'n_clusters' in kwargs:
@@ -161,6 +162,11 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         from clusters import narrow
         distances, data['sample_classes'] = narrow(n_samples, n_perspectives)
         data['sample_colors'] = data['sample_classes']
+    elif dataset == 'narrow2':
+        from clusters import narrow2
+        distances, data['image_classes'], data['sample_colors'] = \
+            narrow2(n_samples)
+        data['image_colors'] = data['image_classes']
     elif dataset == '123':
         import projections
         X = np.genfromtxt(directory+'/123/123.csv',delimiter=',')[0:n_samples]

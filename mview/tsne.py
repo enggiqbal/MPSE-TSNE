@@ -372,7 +372,7 @@ class TSNE(object):
         for divisor in [20,10,5,2]:
             batch_size = max(5,min(500,self.n_samples//divisor))
             self.gd(batch_size=batch_size, max_iter=20, scheme='mm')
-        self.gd(max_iter=iters,scheme='fixed')
+        #self.gd(max_iter=iters,scheme='fixed')
         if self.verbose >0:
             self.indent = self.indent[0:-2]
 
@@ -477,7 +477,7 @@ def basic(data, **kwargs):
 if __name__=='__main__':
     print('\n***mview.tsne : running tests***\n')
 
-    basic('pride', n_samples=300, perplexity=20,
+    basic('narrow', n_samples=300, perplexity=20,
           estimate_cost=True)
     run_all_tsne=True
     estimate_cost=False

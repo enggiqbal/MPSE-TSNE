@@ -103,7 +103,7 @@ def compare_tsne(data,
         mv.plot_images()
         plt.show()
     return results
-
+    
 def compare_perplexity(data, perplexities=[30,200],iters=100,
                        save_results=True, **kwargs):
     "runs mpse_tsne on the same perspective w/ different perplexity values"
@@ -155,13 +155,13 @@ def compare_perplexity(data, perplexities=[30,200],iters=100,
 
     #search for global minima
     n_samples = mv.n_samples
-    mv.gd(fixed_projections=True, max_iter=10, batch_size=min(25,n_samples//2),
-          scheme='mm')
+    mv.gd(fixed_projections=True, max_iter=10,
+          scheme='bb')
     for divisor in [20,10,5]:
         batch_size = max(5,min(500,n_samples//divisor))
         mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
     mv.gd(max_iter=iters, batch_size=int(n_samples/2), scheme='mm')
-    mv.gd(max_iter=20, scheme='fixed')
+    #mv.gd(max_iter=20, scheme='fixed')
     print(mv.individual_cost)
 
     if save_results is True:
@@ -196,15 +196,16 @@ if __name__=='__main__':
     estimate_cost=False
     evaluate=True
 
-    mpse_tsne('pride',n_samples=300,perplexity=30,
-              n_perspectives=3, estimate_cost=False,
-              verbose=2,show_plots=True,save_results=False)
-    mpse_tsne('narrow',n_samples=300,perplexity=30,
-              n_perspectives=3, estimate_cost=False,
-              verbose=2,show_plots=True,save_results=False)
+#    mpse_tsne('narrow2',n_samples=300,perplexity=50,
+#              n_perspectives=2, estimate_cost=False,
+#              verbose=2,show_plots=True,save_results=False)
+    
+#    mpse_tsne('pride',n_samples=300,perplexity=30,
+#              n_perspectives=3, estimate_cost=False,
+#              verbose=2,show_plots=True,save_results=False)
     
     
-    run_all_mpse_tsne = True
+    run_all_mpse_tsne = False
     if run_all_mpse_tsne is True:
         mpse_tsne('equidistant',
                   estimate_cost=estimate_cost,evaluate=evaluate,
@@ -221,7 +222,7 @@ if __name__=='__main__':
         mpse_tsne('florence', perplexity = 40,
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
-        mpse_tsne('123', n_samples=300, perplexity = 460,
+        mpse_tsne('123', n_samples=300, perplexity = 250,
                   estimate_cost=estimate_cost,evaluate=evaluate,
                   verbose=2,show_plots=True)
         mpse_tsne('mnist',n_samples=400,perplexity=30,
@@ -236,12 +237,14 @@ if __name__=='__main__':
 
     run_all_compare_tsne = False
     if run_all_compare_tsne is True:
+        compare_tsne('clusters', n_samples=400, n_perspectives=1,
+                     evaluate=True, verbose=2)
         compare_tsne('clusters', n_samples=400, n_perspectives=2,
                      evaluate=True, verbose=2)
         
     run_all_compare_perplexity = True
     if run_all_compare_perplexity is True:
-        compare_perplexity('disk2', n_samples=400,
-                           n_clusters=2, n_perspectives=3,
-                           perplexities=[5,10,250])
+        compare_perplexity('clusters', n_samples=400,
+                           n_clusters=2, n_perspectives=5,
+                           perplexities=[30,30,30,30,30])
     
