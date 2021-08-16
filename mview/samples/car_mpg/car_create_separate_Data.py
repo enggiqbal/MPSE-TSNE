@@ -26,38 +26,33 @@ print(file)
 # df2 = pd.read_csv(file, usecols = ['horsepower',  'weight', 'acceleration'])
 
 df1 = pd.read_csv(file, usecols=[0,1,2])
-
 df2 = pd.read_csv(file, usecols=[3,4,5])
+# df3 = pd.read_csv(file, usecols=[6,7])
 
 # df2["horsepower"] = [float(str(i).replace(",", "")) for i in df2["horsepower"]]
 
 # df1.to_csv(path + '/car_mpg_1.csv')
 
 a = df1.values
-
 b = df2.values
-
-# a.astype(float)
-# b.astype(float)
-
-
-print(len(a), len(b))
-print(len(a[0]), len(b[0]))
-print(a[0])
-print(b[0])
+# c = df3.values
 
 
 
-# print(df1)
+# Normalizing the columns by the max element
+maxVecA = np.amax(a, axis = 0)
+maxVecB = np.max(b, axis = 0)
+# maxVecC = np.max(c, axis = 0)
 
-# print([df1, df2])
 
-# pd.to_csv(df1, path + '1.csv')
+a = np.divide(a.T, maxVecA.reshape(len(maxVecA), 1)).T
+b = np.divide(b.T, maxVecB.reshape(len(maxVecB), 1)).T
+# c = np.divide(c.T, maxVecC.reshape(len(maxVecC), 1)).T
 
-# df1.to_csv(path + '/car_mpg_1.csv',  header = None, index=False)
 
-print(type(a))
-print(type(b))
 
 data = [a, b]
-results = mview.mpse_tsne(data, perplexity=30, show_plots=True, verbose=2)
+
+# data = [a, b, c]
+
+results = mview.mpse_tsne(data, perplexity=30, show_plots=True, save_results=True, verbose=2)
