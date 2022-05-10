@@ -15,6 +15,7 @@ def fixed(x,dfx,lr=1.0,p=None,**kwargs):
     """\
     Fixed learning rate GD scheme.
     """
+    lr = 0.001
     dx = -lr*dfx #step against gradient
     ndx = np.linalg.norm(dx) #step size against gradient
     y = x+dx #position after step against gradient (before projection)
@@ -86,7 +87,7 @@ def mm(x,dfx,df0x=None,x0=0,df0x0=0,p=None,y=0,ndx=None,lr=10,theta=np.Inf,
 
     x : current position
     dfx : gradient at current position, using current approximation
-    df0x : gradient at current position (or pre-projection), using old 
+    df0x : gradient at current position (or pre-projection), using old
     approximation
     """
     if ndx is None:
@@ -169,12 +170,12 @@ schemes = {
     }
 
 ### ALGORITHMS ###
-    
+
 def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
            min_grad=None, min_step=None,max_iter=100,max_step=1e10,
            lr=1,verbose=0,indent='',plot=False,**kwargs):
     """\
-    Gradient descent algorithm, with different options for update rule and 
+    Gradient descent algorithm, with different options for update rule and
     stochastic and/or projected variaties.
 
     Parameters:
@@ -209,7 +210,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
         constraint = True
     assert scheme in schemes
     algorithm = schemes[scheme]
-    
+
     if verbose > 0:
         print(indent+'gd.single(): ')
         print(indent+'  computation parameters:')
@@ -225,7 +226,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
             print(indent+f'    min_step : {min_step:0.2e}')
         print(indent+f'    max_iter : {max_iter}')
         print(indent+f'    max_step : {max_step:0.2e}')
-        
+
     if min_cost is None:
         min_cost = -np.Inf
     if min_grad is None:
@@ -240,7 +241,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
 
     success = True
     conclusion = 'maximum number of iterations reached'
-    
+
     t0 = time.time()
 
     normalization = len(x)*math.sqrt(np.size(x[0]))
@@ -265,7 +266,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
     if verbose > 1:
         print(indent+'  progress:')
         print(indent+'    iter:      cost:     grad:     lr:       step:')
-        
+
     for i in range(it0,max_iter):
 
         if stochastic is False:
@@ -287,7 +288,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
             dfx, fx = F(x,**xi)
         costs[i] = fx
         grads[i] = np.linalg.norm(dfx)/normalization #rms of gradient
-        
+
         if fx < min_cost:
             conclusion = 'minimum cost reached'
             lrs[i] = None
@@ -298,9 +299,9 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
             lrs[i] = None
             steps[i] = None
             break
-        
+
         x, kwargs = algorithm(x,dfx,p=p,**kwargs)
-        
+
         if constraint is True:
             y = kwargs['y']
         if kwargs['stop'] == True:
@@ -320,7 +321,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
             print(indent+f'    {i+1:>4}/{max_iter:>4}  {costs[i]:0.2e}'+
                   f'  {grads[i]:0.2e}  {lrs[i]:0.2e}'+
                   f'  {steps[i]:0.2e}',flush=True, end="\r")
-    
+
     tf = time.time()
 
     costs = costs[0:i+1]
@@ -338,7 +339,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
         ax.set_xlabel('iterations')
         plt.draw()
         plt.pause(0.1)
-    
+
     outputs = {
         'costs' : costs,
         'steps' : steps,
@@ -350,7 +351,7 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
         'time' : tf-t0,
         'lr' : lr
         }
-        
+
     if verbose > 0:
         if verbose > 1:
             print()
@@ -358,11 +359,11 @@ def single(x,F,Xi=None,p=None,scheme='mm',min_cost=None,
         print(indent+f'    conclusion : {conclusion}')
         print(indent+f'    total iterations : {i+1}')
         print(indent+f'    final cost : {costs[-1]:0.2e}')
-        print(indent+f'    final gradient size : {grads[-1]:0.2e}')        
+        print(indent+f'    final gradient size : {grads[-1]:0.2e}')
         print(indent+f'    final learning rate : {lrs[-1]:0.2e}')
         print(indent+f'    final step size : {steps[-1]:0.2e}')
         print(indent+f'    time : {tf-t0:0.2e} [sec]')
-        
+
     return x, outputs
 
 def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
@@ -377,7 +378,7 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
         stochastic = False
     else:
         stochastic = True
-        
+
     if isinstance(p,list):
         assert len(p) == K
     else:
@@ -387,7 +388,7 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
         constraint = True
     else:
         constraint = False
-        
+
     if isinstance(scheme,list):
         assert len(scheme) == K
     else:
@@ -418,7 +419,7 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
             print(indent+f'    min_step : {min_step:0.2e}')
         print(indent+f'    max_iter : {max_iter}')
         print(indent+f'    max_step : {max_step:0.2e}')
-        
+
     if min_cost is None:
         min_cost = -np.Inf
     if min_grad is None:
@@ -459,11 +460,11 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
         grads[i] = [np.linalg.norm(dfX[k])/normalization[k] for k in range(K)] ####
         lrs[i] = lr
         steps[i] = [KWARGS[k]['ndx']/normalization[k] for k in range(K)]
-        
+
     if verbose > 0:
         print(indent+'  progress:')
         print(indent+'    iter:      cost:     grad:     lr:       step:')
-        
+
     for i in range(it0,max_iter):
 
         if stochastic is False:
@@ -477,8 +478,8 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
                 df0Y, f0Y = F(Y,**xi)
             xi = Xi()
             dfX, fX = F(X,**xi)
-            
-        costs[i] = fX     
+
+        costs[i] = fX
         grads[i] = [np.linalg.norm(a)/b for a, b in zip(dfX,normalization)]
 
         if fX < min_cost:
@@ -526,12 +527,12 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
                   f'  {np.max(grads[i]):0.2e}  {np.max(lrs[i]):0.2e}'+\
                   f'  {np.max(steps[i]):0.2e}',
                   flush=True, end="\r")
-    
+
    # if verbose > 0:
     #    sys.stdout.write("\033[K")
      #   sys.stdout.write("\033[F")
       #  sys.stdout.write("\033[K")
-        
+
     tf = time.time()
 
     costs = costs[0:i+1]
@@ -552,7 +553,7 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
             axes[k+1].set_xlabel('iterations')
         plt.draw()
         plt.pause(0.1)
-    
+
     outputs = {
         'costs' : costs,
         'steps' : steps,
@@ -564,7 +565,7 @@ def multiple(X,F,Xi=None,p=None,scheme='mm',min_cost=None,
         'time' : tf-t0,
         'lr' : lr
         }
-        
+
     if verbose > 0:
         if verbose > 1:
             print()
@@ -588,9 +589,9 @@ def mgd(x0,F,lr=0.1,attempts=10,reduce_factor=10,verbose=0,**kwargs):
     Initial parameter array or list of initial parameter array.
 
     F : function(array-like)
-    Function returning the tuple containing the cost and gradient(s) at the 
-    parameters of interest. Given an array or list of arrays x (same shape as 
-    x0), it returns (f(x),df(x)), where f is the cost function and df is the 
+    Function returning the tuple containing the cost and gradient(s) at the
+    parameters of interest. Given an array or list of arrays x (same shape as
+    x0), it returns (f(x),df(x)), where f is the cost function and df is the
     gradient(s) function.
 
     lr : number > 0
@@ -639,7 +640,7 @@ def mgd(x0,F,lr=0.1,attempts=10,reduce_factor=10,verbose=0,**kwargs):
         else:
             specs['final_lr'] = lr
             break
-        
+
     if verbose > 0:
         print('  number of attempts :',attempt, flush=True)
 

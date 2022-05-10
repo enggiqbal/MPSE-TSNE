@@ -17,7 +17,7 @@ def mpse_tsne(data, perplexity=30,
     "Runs MPSE optimized for tsne"
     if verbose>0:
         print('***mview.mpse_tsne()***')
-    
+
     #load/prepare distances and other variables from data
     if isinstance(data,str):
         import samples
@@ -26,8 +26,8 @@ def mpse_tsne(data, perplexity=30,
         for key, value in kwargs0.items():
             kwargs[key] = value
     else:
-        distances = data    
-        
+        distances = data
+
     #start MPSE object
     mv =  MPSE(distances, visualization_method='tsne',
                visualization_args={'perplexity':perplexity,
@@ -51,7 +51,7 @@ def mpse_tsne(data, perplexity=30,
 
     if evaluate is True:
         mv.evaluate()
-        
+
     #save outputs:
     if save_results is True:
         mv.save()
@@ -62,14 +62,14 @@ def mpse_tsne(data, perplexity=30,
         mv.plot_embedding()
         mv.plot_images(**kwargs)
         plt.show()
-        
+
     return mv
 
 def compare_tsne(data,
                  estimate_cost=True, evaluate=False,
                  save_results=False, show_plots=True, **kwargs):
     "compares mpse-tsne to regular tsne"
-    
+
     #load/prepare distances and other variables from data
     if isinstance(data,str):
         import samples
@@ -93,7 +93,7 @@ def compare_tsne(data,
             ts.plot_embedding()
     kwargs0 = lkwargs[0]
     for key, value in kwargs.items():
-        kwargs0[key] = value     
+        kwargs0[key] = value
     mv=mpse_tsne(distances,
                  estimate_cost=estimate_cost, evaluate=evaluate,
                  **kwargs0)
@@ -103,7 +103,7 @@ def compare_tsne(data,
         mv.plot_images()
         plt.show()
     return results
-    
+
 def compare_perplexity(data, perplexities=[30,200],iters=100,
                        save_results=True, **kwargs):
     "runs mpse_tsne on the same perspective w/ different perplexity values"
@@ -117,8 +117,8 @@ def compare_perplexity(data, perplexities=[30,200],iters=100,
             os.makedirs(location)
         for f in os.listdir(location):
             os.remove(os.path.join(location,f))
-             
-    
+
+
     #load/prepare distances and other variables from data
     if isinstance(data,str):
         import samples
@@ -142,7 +142,7 @@ def compare_perplexity(data, perplexities=[30,200],iters=100,
         if save_results is True:
             np.savetxt(location+'tsne_image_'+str(i)+'.csv',
                        ts.embedding)
-        
+
     distances = [distances]*len(perplexities)
 
 
@@ -188,7 +188,7 @@ def compare_perplexity(data, perplexities=[30,200],iters=100,
     plt.draw()
     plt.pause(0.2)
     plt.show()
-    
+
     return
 
 if __name__=='__main__':
@@ -199,12 +199,12 @@ if __name__=='__main__':
 #    mpse_tsne('narrow2',n_samples=300,perplexity=50,
 #              n_perspectives=2, estimate_cost=False,
 #              verbose=2,show_plots=True,save_results=False)
-    
+
 #    mpse_tsne('pride',n_samples=300,perplexity=30,
 #              n_perspectives=3, estimate_cost=False,
 #              verbose=2,show_plots=True,save_results=False)
-    
-    
+
+
     run_all_mpse_tsne = False
     if run_all_mpse_tsne is True:
         mpse_tsne('equidistant',
@@ -241,10 +241,9 @@ if __name__=='__main__':
                      evaluate=True, verbose=2)
         compare_tsne('clusters', n_samples=400, n_perspectives=2,
                      evaluate=True, verbose=2)
-        
+
     run_all_compare_perplexity = True
     if run_all_compare_perplexity is True:
         compare_perplexity('clusters', n_samples=400,
                            n_clusters=2, n_perspectives=5,
                            perplexities=[30,30,30,30,30])
-    

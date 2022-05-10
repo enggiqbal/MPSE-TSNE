@@ -64,37 +64,45 @@ i = families.index('Medici')
 perspectives = groups[0:2]
 neighs1 = np.where(distances[0][i] != np.inf)[0]
 neighs2 = np.where(distances[1][i] != np.inf)[0]
-indices = list(set(list(neighs1)) & set(list(neighs2)))
+#neighs3 = np.where(distances[2][i] != np.inf)[0]
+indices = list(set(list(neighs1)) & set(list(neighs2)) ) # & set(list(neighs3)) )
 
 #corresponding families and distance matrices
 reduced_families = [families[i] for i in indices]
 reduced_distances = distances[0:2][:,indices][:,:,indices]
 
 #edges:
-edges1 = []; edges2 = []
-s1 = similarities[0]; s2 = similarities[6]
+edges1 = []; edges2 = []; edges3 = []
+s1 = similarities[0]; s2 = similarities[6] #; s3 = similarities[1]+similarities[2]
 r1 = s1[indices][:,indices]
 r2 = s2[indices][:,indices]
+#r3 = s3[indices][:,indices]
 for i in range(len(reduced_families)):
     for j in range(i+1,len(reduced_families)):
         if r1[i,j] > 0:
             edges1.append([i,j])
         if r2[i,j] > 0:
             edges2.append([i,j])
+        # if r3[i,j] > 0:
+        #     edges3.append([i,j])
 edges = [edges1,edges2]
 
 #indices corresponding to Medic and Strozzi:
 medici = reduced_families.index('Medici')
 strozzi = reduced_families.index('Strozzi')
 labels = [None]*len(reduced_families)
+
+for n in range(len(reduced_families)):
+    labels[n] = n
 labels[medici] = 'Medici'
 labels[strozzi] = 'Strozzi'
+
+print(medici)
 
 def setup():
     dictionary = {
         'edges' : edges,
-        'sample_labels' : labels,
-        'image_colors' : medici
+        'sample_labels' : labels
+        #'image_colors' : medici
         }
     return reduced_distances, dictionary
-    
