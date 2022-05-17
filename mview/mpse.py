@@ -673,7 +673,7 @@ class MPSE(object):
                     weight=self.weights[k],
                          labels = self.sample_labels, **kwargs)
             #ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
-        plt.suptitle("Marriage (left) vs. loans (right)")
+        #plt.suptitle("Marriage (left) vs. loans (right)")
         if plot is True:
             plt.draw()
             plt.pause(1.0)

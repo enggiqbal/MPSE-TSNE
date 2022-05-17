@@ -97,7 +97,7 @@ for n in range(len(reduced_families)):
 labels[medici] = 'Medici'
 labels[strozzi] = 'Strozzi'
 
-print(medici)
+print(edges)
 
 def setup():
     dictionary = {
