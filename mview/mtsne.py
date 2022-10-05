@@ -13,7 +13,7 @@ import evaluate
 def mpse_tsne(data, perplexity=30,
               iters=200, lr=[20,0.1],
               estimate_cost=True, evaluate=False,
-              verbose=0, show_plots=False, save_results = False,**kwargs):
+              verbose=0, show_plots=False, save_results = False,output=None,**kwargs):
     "Runs MPSE optimized for tsne"
     if verbose>0:
         print('***mview.mpse_tsne()***')
@@ -62,6 +62,10 @@ def mpse_tsne(data, perplexity=30,
         mv.plot_embedding()
         mv.plot_images(**kwargs)
         plt.show()
+
+    if output:
+        mv.plot_images(**kwargs)
+        plt.savefig(output)
 
     return mv
 

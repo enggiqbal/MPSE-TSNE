@@ -9,6 +9,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.spatial.distance
 from scipy.spatial.distance import squareform
 
+clr_map = [
+    "Accent_r",
+    "Dark2_r",
+    "Set1_r",
+    "Set2_r"
+]
+
 import misc, setup, multigraph, gd, projections, mds, tsne, plots, evaluate
 
 class MPSE(object):
@@ -638,7 +645,7 @@ class MPSE(object):
                      colors=colors,title=title,ax=ax,**kwargs)
 
     def plot_images(self,title=None,edges=None,
-                colors=True,plot=True,
+                colors=True,plot=True,sample_classes=None,
                 ax=None,**kwargs):
         if ax is None:
             fig, ax = plt.subplots(1,self.n_perspectives,
@@ -670,13 +677,14 @@ class MPSE(object):
                 colors_k = scipy.spatial.distance.squareform(self.distances[k])[colors_k]
 
             plots.plot2D(self.images[k],edges=edges[k],colors=colors_k,ax=ax[k],
-                    weight=self.weights[k],
+                    weight=self.weights[k], sample_classes=sample_classes[k],cmap = clr_map[k],
                          labels = self.sample_labels, **kwargs)
             #ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
         #plt.suptitle("Marriage (left) vs. loans (right)")
         if plot is True:
-            plt.draw()
-            plt.pause(1.0)
+            pass
+            # plt.draw()
+            # plt.pause(1.0)
 
     def plot_computations(self,title='computations',plot=True,ax=None):
         if self.fixed_embedding is True or self.fixed_projections is True:

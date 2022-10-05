@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
 import matplotlib.spines as spines
+import matplotlib.cm as cm
 from mpl_toolkits.mplot3d import Axes3D
 import pickle; import csv
 import numpy as np
+
+
 
 def plot_cost(cost,steps=None,title='computations',plot=True,ax=None):
     if ax is None:
@@ -20,7 +23,7 @@ def plot_cost(cost,steps=None,title='computations',plot=True,ax=None):
         plt.pause(1.0)
         
 def plot2D(Y,save=False,colors=None,edges=None,labels=None,
-           title=None,axis=True,ax=None,plot=True,markersize=40, weight=None,**kwargs):
+           title=None,axis=True,ax=None,plot=True,markersize=40, weight=None,sample_classes=None,cmap=None,**kwargs):
     if ax is None:
         fig, ax = plt.subplots(figsize=(5,4))
     else:
@@ -33,7 +36,10 @@ def plot2D(Y,save=False,colors=None,edges=None,labels=None,
                     linewidth=0.2,color='gray',zorder=1)
             
     
-    ax.scatter(Y[:,0],Y[:,1],s=markersize,c=colors,zorder=2)
+    scatter = ax.scatter(Y[:,0],Y[:,1],s=markersize,c=colors,zorder=2,cmap=cmap)
+    elem,_ = scatter.legend_elements()
+    ax.legend(elem,sample_classes)
+
     if weight is not None:
         '''
             if weight is not None, then the hidden points should label as color black
@@ -42,6 +48,9 @@ def plot2D(Y,save=False,colors=None,edges=None,labels=None,
             if weight[index * (len(Y) - 1)] == 0:  
                 #print(index, 'hidden------------------------------')
                 ax.scatter(Y[index][0],Y[index][1],s=markersize,c='black',zorder=2)
+                
+                # elem,_ = scatter.legend_elements()
+# pylab.legend(elem,names)
             
 
 
