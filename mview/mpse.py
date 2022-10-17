@@ -205,7 +205,7 @@ class MPSE(object):
             if self.verbose > 0:
                 print('  setup visualization instance for perspective',
                       self.perspective_labels[i],':')
-            if visualization_method[i] is 'mds':
+            if visualization_method[i] == 'mds':
                 vis = mds.MDS(self.distances[i],
                               weights = self.weights[i],
                               embedding_dimension=self.image_dimension,

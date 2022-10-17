@@ -6,10 +6,6 @@
 "6","Adelie","Torgersen",39.3,20.6,190,3650,"male",2007
 "7","Adelie","Torgersen",38.9,17.8,181,3625,"female",2007
 "8","Adelie","Torgersen",39.2,19.6,195,4675,"male",2007
-"9","Adelie","Torgersen",34.1,18.1,193,3475,NA,2007
-"10","Adelie","Torgersen",42,20.2,190,4250,NA,2007
-"11","Adelie","Torgersen",37.8,17.1,186,3300,NA,2007
-"12","Adelie","Torgersen",37.8,17.3,180,3700,NA,2007
 "13","Adelie","Torgersen",41.1,17.6,182,3200,"female",2007
 "14","Adelie","Torgersen",38.6,21.2,191,3800,"male",2007
 "15","Adelie","Torgersen",34.6,21.1,198,4400,"male",2007
@@ -45,7 +41,6 @@
 "45","Adelie","Dream",37,16.9,185,3000,"female",2007
 "46","Adelie","Dream",39.6,18.8,190,4600,"male",2007
 "47","Adelie","Dream",41.1,19,182,3425,"male",2007
-"48","Adelie","Dream",37.5,18.9,179,2975,NA,2007
 "49","Adelie","Dream",36,17.9,190,3450,"female",2007
 "50","Adelie","Dream",42.3,21.2,191,4150,"male",2007
 "51","Adelie","Biscoe",39.6,17.7,186,3500,"female",2008
@@ -176,7 +171,6 @@
 "176","Gentoo","Biscoe",46.3,15.8,215,5050,"male",2007
 "177","Gentoo","Biscoe",42.9,13.1,215,5000,"female",2007
 "178","Gentoo","Biscoe",46.1,15.1,215,5100,"male",2007
-"179","Gentoo","Biscoe",44.5,14.3,216,4100,NA,2007
 "180","Gentoo","Biscoe",47.8,15,215,5650,"male",2007
 "181","Gentoo","Biscoe",48.2,14.3,210,4600,"female",2007
 "182","Gentoo","Biscoe",50,15.3,220,5550,"male",2007
@@ -216,7 +210,6 @@
 "216","Gentoo","Biscoe",54.3,15.7,231,5650,"male",2008
 "217","Gentoo","Biscoe",45.8,14.2,219,4700,"female",2008
 "218","Gentoo","Biscoe",49.8,16.8,230,5700,"male",2008
-"219","Gentoo","Biscoe",46.2,14.4,214,4650,NA,2008
 "220","Gentoo","Biscoe",49.5,16.2,229,5800,"male",2008
 "221","Gentoo","Biscoe",43.5,14.2,220,4700,"female",2008
 "222","Gentoo","Biscoe",50.7,15,223,5550,"male",2008
@@ -254,7 +247,6 @@
 "254","Gentoo","Biscoe",55.9,17,228,5600,"male",2009
 "255","Gentoo","Biscoe",47.2,15.5,215,4975,"female",2009
 "256","Gentoo","Biscoe",49.1,15,228,5500,"male",2009
-"257","Gentoo","Biscoe",47.3,13.8,216,4725,NA,2009
 "258","Gentoo","Biscoe",46.8,16.1,215,5500,"male",2009
 "259","Gentoo","Biscoe",41.7,14.7,210,4700,"female",2009
 "260","Gentoo","Biscoe",53.4,15.8,219,5500,"male",2009
@@ -266,7 +258,6 @@
 "266","Gentoo","Biscoe",51.5,16.3,230,5500,"male",2009
 "267","Gentoo","Biscoe",46.2,14.1,217,4375,"female",2009
 "268","Gentoo","Biscoe",55.1,16,230,5850,"male",2009
-"269","Gentoo","Biscoe",44.5,15.7,217,4875,NA,2009
 "270","Gentoo","Biscoe",48.8,16.2,222,6000,"male",2009
 "271","Gentoo","Biscoe",47.2,13.7,214,4925,"female",2009
 "273","Gentoo","Biscoe",46.8,14.3,215,4850,"female",2009
