@@ -22,25 +22,27 @@ X = np.delete(data, [0,1,2,7,8], axis=1).astype(float)
 X /= X.max(axis=0)
 
 
-e1 = TSNE(perplexity=20,init='pca',learning_rate='auto').fit_transform(X)
-scatter = pylab.scatter(e1[:,0],e1[:,1],20, labels)
-elem,_ = scatter.legend_elements()
-pylab.legend(elem,names1)
-pylab.show()
-# for p in [2,10,20,30,40,50,60,80,100,120,140,180,200]:
-# for _ in range(20):
-dims = [0,1,2,3]
-dim1 = [1,2]
-dim2 = [0,3]
-#dim2 = [i for i in dims if i not in dim1]
+import itertools
 
-x1 = np.delete(X, dim1 ,axis=1)
-x2 = np.delete(X, dim2, axis=1)
-# x2 = sex_val
-# x2 = np.reshape(x2, (-1,1))
+for c,i in enumerate(itertools.product([0,1],repeat=4)):
+    mask = [j for j in range(4) if i[j]]
+    if len(mask) > 2: continue
+    print(len(mask))
+    
+    x1 = np.delete(X,mask,axis=1)
 
-mview.mpse_tsne([x1,x2],
-                perplexity=30,
-                verbose=2,sample_colors=[labels1,labels], sample_classes=[names1,names],show_plots=True,iters=500)
+    e1 = TSNE(perplexity=20,init='pca' if len(mask) < 3 else 'random',learning_rate='auto').fit_transform(x1)
+    scatter = pylab.scatter(e1[:,0],e1[:,1],20, labels)
+    elem,_ = scatter.legend_elements()
+    pylab.legend(elem,names)
+    pylab.savefig('penguins/iter_num{}.png'.format(c))
+    pylab.clf()
+
+# mview.mpse_tsne([x1,x2],
+#                 perplexity=30,
+#                 verbose=2,sample_colors=[labels1,labels], sample_classes=[names1,names],show_plots=True,iters=200)
+
+
+
 
 
