@@ -445,6 +445,7 @@ class MPSE(object):
     def gd(self, batch_size=None, lr=None, fixed_projections='default',
            fixed_embedding='default', **kwargs):
 
+
         if fixed_projections == 'default':
             fixed_projections = self.fixed_projections
         if fixed_embedding == 'default':
@@ -645,7 +646,7 @@ class MPSE(object):
                      colors=colors,title=title,ax=ax,**kwargs)
 
     def plot_images(self,title=None,edges=None,
-                colors=True,plot=True,sample_classes=None,
+                colors=True,plot=True,sample_classes=None, sample_labels=None,
                 ax=None,**kwargs):
         if ax is None:
             fig, ax = plt.subplots(1,self.n_perspectives,
@@ -677,8 +678,7 @@ class MPSE(object):
                 colors_k = scipy.spatial.distance.squareform(self.distances[k])[colors_k]
 
             plots.plot2D(self.images[k],edges=edges[k],colors=colors_k,ax=ax[k],
-                    weight=self.weights[k], sample_classes=sample_classes[k],cmap = clr_map[k],
-                         labels = self.sample_labels, **kwargs)
+                    weight=self.weights[k], labels=self.sample_labels,fig=fig,**kwargs)
             #ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
         #plt.suptitle("Marriage (left) vs. loans (right)")
         if plot is True:

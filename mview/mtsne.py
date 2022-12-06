@@ -13,7 +13,7 @@ import evaluate
 def mpse_tsne(data, perplexity=30,
               iters=200, lr=[20,0.1],
               estimate_cost=True, evaluate=False,
-              verbose=0, show_plots=False, save_results = False,output=None,**kwargs):
+              verbose=0, show_plots=False, save_results = False,output=None, smart_init=True,**kwargs):
     "Runs MPSE optimized for tsne"
     if verbose>0:
         print('***mview.mpse_tsne()***')
@@ -27,6 +27,8 @@ def mpse_tsne(data, perplexity=30,
             kwargs[key] = value
     else:
         distances = data
+
+    #init = avg_pca(data) if smart_init else None
 
     #start MPSE object
     mv =  MPSE(distances, visualization_method='tsne',
@@ -45,7 +47,10 @@ def mpse_tsne(data, perplexity=30,
     for divisor in [20,10,5]:
         batch_size = max(5,min(500,n_samples//divisor))
         mv.gd(batch_size=batch_size, max_iter=20, scheme='mm')
-    mv.gd(max_iter=iters, batch_size=int(n_samples/2), scheme='mm')
+    mv.gd(max_iter=iters, batch_size = 32, scheme='mm')
+   
+    # mv.gd(max_iter=iters, scheme='mm')
+
     #mv.gd(max_iter=50, scheme='bb')
     #mv.gd(max_iter=200, scheme='fixed')
 
@@ -68,6 +73,17 @@ def mpse_tsne(data, perplexity=30,
         plt.savefig(output)
 
     return mv
+
+def avg_pca(data):
+    from sklearn.metrics import pairwise_distances
+    from sklearn.decomposition import PCA
+    n_perspectives = len(data)
+    avg = np.zeros( (data[0].shape[0], data[0].shape[0]) )
+    for x in data:
+        avg += pairwise_distances(x)
+    avg /= n_perspectives
+
+    return PCA(n_components=3).fit_transform(avg)
 
 def compare_tsne(data,
                  estimate_cost=True, evaluate=False,

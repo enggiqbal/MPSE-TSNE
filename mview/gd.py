@@ -16,6 +16,8 @@ def fixed(x,dfx,lr=1.0,p=None,**kwargs):
     Fixed learning rate GD scheme.
     """
     lr = 0.001
+    lr = 10 / (fixed.counter + 1)
+    fixed.counter += 1
     dx = -lr*dfx #step against gradient
     ndx = np.linalg.norm(dx) #step size against gradient
     y = x+dx #position after step against gradient (before projection)
@@ -33,6 +35,7 @@ def fixed(x,dfx,lr=1.0,p=None,**kwargs):
            'df0x0' : dfx,
            'stop' : False}
     return x, out
+fixed.counter = 0
 
 def bb(x,dfx,x0=0,dfx0=0,p=None,y=None,**kwargs):
     """\

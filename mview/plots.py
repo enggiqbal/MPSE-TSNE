@@ -23,7 +23,7 @@ def plot_cost(cost,steps=None,title='computations',plot=True,ax=None):
         plt.pause(1.0)
         
 def plot2D(Y,save=False,colors=None,edges=None,labels=None,
-           title=None,axis=True,ax=None,plot=True,markersize=40, weight=None,sample_classes=None,cmap=None,**kwargs):
+           title=None,axis=True,ax=None,fig=None,plot=True,markersize=40, weight=None,sample_classes=None,cmap=None,**kwargs):
     if ax is None:
         fig, ax = plt.subplots(figsize=(5,4))
     else:
@@ -36,9 +36,9 @@ def plot2D(Y,save=False,colors=None,edges=None,labels=None,
                     linewidth=0.2,color='gray',zorder=1)
             
     
-    scatter = ax.scatter(Y[:,0],Y[:,1],s=markersize,c=colors,zorder=2,cmap=cmap)
-    elem,_ = scatter.legend_elements()
-    ax.legend(elem,sample_classes)
+    scatter = ax.scatter(Y[:,0],Y[:,1],s=markersize,c=colors,zorder=2,alpha=0.3)
+    # elem,_ = scatter.legend_elements()
+    # ax.legend(elem,sample_classes)
 
     if weight is not None:
         '''
@@ -54,16 +54,46 @@ def plot2D(Y,save=False,colors=None,edges=None,labels=None,
             
 
 
-
     if labels is not None:
+        print(labels)
         N = len(Y)
-        if labels is True:
-            labels = range(N)
-        for i in range(N):
-            ax.annotate(labels[i],(Y[i,0],Y[i,1]),textcoords="offset points",
-                        xytext=(0,4),ha='center',fontsize='large',
-                        fontstyle='oblique',fontweight='bold',
-                        horizontalalignment='center',color='red')
+        # if labels is True:
+        #     labels = range(N)
+        # for i in range(N):
+        #     ax.annotate(labels[i],(Y[i,0],Y[i,1]),textcoords="offset points",
+        #                 xytext=(0,4),ha='center',fontsize='small',
+        #                 fontstyle='oblique',fontweight='bold',
+        #                 horizontalalignment='center',color='red')
+        annot = ax.annotate("", xy=(0,0), xytext=(0,0),textcoords="offset points",
+                    bbox=dict(boxstyle="round", fc="w"),
+                    arrowprops=dict(arrowstyle="->"))
+        annot.set_visible(False)
+
+        def update_annot(ind):
+
+            pos = scatter.get_offsets()[ind["ind"][0]]
+            annot.xy = pos
+            # text = "{}, {}".format(" ".join(list(map(str,ind["ind"]))), 
+            #                     " ".join([names[n] for n in ind["ind"]]))
+            annot.set_text(labels[ind["ind"][0]])
+            # annot.get_bbox_patch().set_facecolor(cmap(norm(c[ind["ind"][0]])))
+            # annot.get_bbox_patch().set_alpha(0.4)
+
+
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == ax:
+                cont, ind = scatter.contains(event)
+                if cont:
+                    update_annot(ind)
+                    annot.set_visible(True)
+                    fig.canvas.draw_idle()
+                else:
+                    if vis:
+                        annot.set_visible(False)
+                        fig.canvas.draw_idle()
+
+        fig.canvas.mpl_connect("motion_notify_event", hover)
     plt.title(title,fontweight='bold',fontsize='large')
     
     if axis is False:
@@ -126,10 +156,10 @@ def plot3D(X,save=False,perspectives=None,edges=None,colors=None,
     plt.setp(ax.spines.values(), color='blue')
     ax.axes.get_xaxis().set_visible(False)
     
-    if plot is True:
-        plt.tight_layout()
-        plt.draw()
-        plt.pause(0.1)
+    # if plot is True:
+    #     plt.tight_layout()
+    #     plt.draw()
+    #     plt.pause(0.1)
 
     if save is not False:
         assert isinstance(save,str)
