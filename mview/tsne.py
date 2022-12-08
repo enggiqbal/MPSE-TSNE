@@ -70,11 +70,11 @@ def joint_probabilities(distances, perplexity):
     conditional_P /= np.sum(conditional_P,axis=0)
 
     #compute (symmetric) joint probabilities
-    P = (conditional_P + conditional_P.T)
+    P = (conditional_P + conditional_P.T) #/ (2*n_samples)
     P = scipy.spatial.distance.squareform(P, checks=False)
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(P/sum_P, MACHINE_EPSILON)
-
+    
     return P
 
 ### Cost function and gradient ###
@@ -327,6 +327,7 @@ class TSNE(object):
 
     def gd(self, batch_size=None, lr=None, **kwargs):
         "run gradient descent on current embedding"
+
         if self.verbose > 0:
             print(self.indent+'  TSNE.gd():')
             print(self.indent+'    specs:')

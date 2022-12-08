@@ -9,6 +9,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.spatial.distance
 from scipy.spatial.distance import squareform
 
+clr_map = [
+    "Accent_r",
+    "Dark2_r",
+    "Set1_r",
+    "Set2_r"
+]
+
 import misc, setup, multigraph, gd, projections, mds, tsne, plots, evaluate
 
 class MPSE(object):
@@ -36,7 +43,7 @@ class MPSE(object):
         ----------
 
         data : list, length (n_perspectives)
-        List containing distance/dissimilarity/feature data for each 
+        List containing distance/dissimilarity/feature data for each
         perspective. Each array can be of the following forms:
         1) A 1D condensed distance array
         2) A square distance matrix
@@ -78,7 +85,7 @@ class MPSE(object):
 
         visualization_method : str
         Visualization method. Current options are 'mds' and 'tsne'.
-        The visualization method can be different for different perspectives, 
+        The visualization method can be different for different perspectives,
         by passing a list of visualization methods instead.
 
         visualization_args : dict
@@ -106,11 +113,11 @@ class MPSE(object):
 
         projection_dimension : int or array
         Dimension of projections. Can be different for each perspective.
- 
+
         persp : Object instance of projections.Persp class or int > 0.
         Describes set of allowed projection functions and stores list of
         projection parameters. See perspective.py. If instead of a Persp object
-        a positive integer int is given, then it is assumed that 
+        a positive integer int is given, then it is assumed that
         embedding_dimension=image_dimension=int
         and that all projections are the identity.
 
@@ -179,7 +186,7 @@ class MPSE(object):
         else:
             assert len(perspective_labels) == self.n_perspectives
         self.perspective_labels = perspective_labels
-        
+
         #setup classes and colors:
         self.sample_classes = sample_classes
         self.image_classes = image_classes
@@ -198,7 +205,7 @@ class MPSE(object):
             if self.verbose > 0:
                 print('  setup visualization instance for perspective',
                       self.perspective_labels[i],':')
-            if visualization_method[i] is 'mds':
+            if visualization_method[i] == 'mds':
                 vis = mds.MDS(self.distances[i],
                               weights = self.weights[i],
                               embedding_dimension=self.image_dimension,
@@ -238,7 +245,7 @@ class MPSE(object):
                          return_embedding=True,return_projections=True,
                          return_cost=True, return_individual_costs=False):
                 """\
-                Returns MPSE gradient(s), along with cost and individual costs 
+                Returns MPSE gradient(s), along with cost and individual costs
                 (optional).
 
                 Parameters
@@ -254,7 +261,7 @@ class MPSE(object):
                 If True, returns MPSE gradient w.r.t. embedding.
 
                 return_projections : boolean
-                If True, returns MPSE gradient w.r.t. projections. 
+                If True, returns MPSE gradient w.r.t. projections.
 
                 return_cost : boolean
                 If True, returns MPSE cost.
@@ -358,7 +365,7 @@ class MPSE(object):
                             self.n_perspectives,method=initial_projections)
                 self.initial_projections = initial_projections
             self.projections = self.initial_projections
-            self.fixed_projections = False        
+            self.fixed_projections = False
 
         self.initial_cost = None
         self.initial_individual_cost = None
@@ -380,21 +387,21 @@ class MPSE(object):
     def smart_initialize(self,max_iter=[50,30],lr=[1,0.1],
                          batch_size=10,**kwargs):
         """\
-        Computes an mds embedding (dimension embedding_dimension) of the 
-        combined distances. Only works when self.Q_is_fixed is False (as this 
+        Computes an mds embedding (dimension embedding_dimension) of the
+        combined distances. Only works when self.Q_is_fixed is False (as this
         is unnecessary otherwhise).
 
         Parameters :
 
         X0 : None or array
         Optional initial embedding (used to compute mds embedding)
-        
+
         Q0 : None or list of arrays
         Optional initial projection parameters.
         """
         assert self.fixed_embedding is False
         assert self.fixed_projections is False
-    
+
         if self.verbose > 0:
             print(self.indent+'  MPSE.smart_initialize():')
 
@@ -434,15 +441,16 @@ class MPSE(object):
         H['fixed_projections'] = False
         self.computation_history.append(H)
         return
-                
+
     def gd(self, batch_size=None, lr=None, fixed_projections='default',
            fixed_embedding='default', **kwargs):
+
 
         if fixed_projections == 'default':
             fixed_projections = self.fixed_projections
         if fixed_embedding == 'default':
             fixed_embedding = self.fixed_embedding
-            
+
         assert batch_size is None or isinstance(batch_size,int)
         assert fixed_embedding is False or fixed_projections is False
 
@@ -480,7 +488,7 @@ class MPSE(object):
                     lr[0] = 100
                 if lr[1] is None:
                     lr[1] = .01
-                
+
         if self.verbose > 0:
             print(self.indent+'  MPSE.gd():')
             print(self.indent+f'      initial stress : {self.cost:0.2e}')
@@ -574,7 +582,7 @@ class MPSE(object):
             self.computation_history.append(H)
             self.cost_history = np.concatenate((self.cost_history,H['costs']))
             self.lr =  H['lr']
-            
+
         self.update()
 
         if self.verbose > 0:
@@ -609,7 +617,7 @@ class MPSE(object):
             if self.image_separation is not None:
                 print(self.indent+'  ','MPSE.evaluate(): image separation:',
                       self.image_separation)
- 
+
     def plot_embedding(self,title=None,perspectives=True,edges=None,colors=True,
                 plot=True,ax=None,**kwargs):
 
@@ -621,22 +629,24 @@ class MPSE(object):
                 perspectives.append(q)
         else:
             perspectives = None
-            
+
         if edges is not None:
             if isinstance(edges,numbers.Number):
                 edges = edges-self.D
-                
+
         if colors is True:
             colors = self.sample_colors
+        if isinstance(colors,list):
+            colors = colors[0]
         if isinstance(colors, int):
             assert colors in range(self.n_samples)
             colors = squareform(self.distances[0])[colors]
-            
+
         plots.plot3D(self.embedding,perspectives=perspectives,edges=edges,
                      colors=colors,title=title,ax=ax,**kwargs)
 
     def plot_images(self,title=None,edges=None,
-                colors=True,plot=True,
+                colors=True,plot=True,sample_classes=None, sample_labels=None,
                 ax=None,**kwargs):
         if ax is None:
             fig, ax = plt.subplots(1,self.n_perspectives,
@@ -656,7 +666,7 @@ class MPSE(object):
             colors = self.image_colors
         if colors is None:
             colors = self.sample_colors
-            
+
         for k in range(self.n_perspectives):
 
             if isinstance(colors,list) and len(colors)==self.n_perspectives:
@@ -668,14 +678,14 @@ class MPSE(object):
                 colors_k = scipy.spatial.distance.squareform(self.distances[k])[colors_k]
 
             plots.plot2D(self.images[k],edges=edges[k],colors=colors_k,ax=ax[k],
-                    weight=self.weights[k],
-                         labels = self.sample_labels, **kwargs)
+                    weight=self.weights[k], labels=self.sample_labels,fig=fig,**kwargs)
             #ax[k].set_xlabel('individual cost:'+ f'{self.individual_cost[k]}')
-        plt.suptitle(title)
+        #plt.suptitle("Marriage (left) vs. loans (right)")
         if plot is True:
-            plt.draw()
-            plt.pause(1.0)
-    
+            pass
+            # plt.draw()
+            # plt.pause(1.0)
+
     def plot_computations(self,title='computations',plot=True,ax=None):
         if self.fixed_embedding is True or self.fixed_projections is True:
             if ax is None:
@@ -720,7 +730,7 @@ class MPSE(object):
             lrs_X = np.array([])
             steps_X = np.array([])
             iterations=0; markers = []
-            
+
             for H in self.computation_history:
                 if iterations != 0:
                     ax[0].axvline(x=iterations-1,ls='--',c='black',lw=.5)
@@ -749,9 +759,9 @@ class MPSE(object):
                     grads_Q = np.concatenate((grads_Q,H['grads'][:,1]))
                     lrs_Q = np.concatenate((lrs_Q,H['lrs'][:,1]))
                     steps_Q = np.concatenate((steps_Q,H['steps'][:,1]))
-                    
+
             ax[0].semilogy(costs,linewidth=3)
-            ax[0].set_title('MPSE stress')                                            
+            ax[0].set_title('MPSE stress')
 
             ax[1].semilogy(grads_X, label='gradient size', linestyle='--')
             ax[1].semilogy(lrs_X,label='learning rate', linestyle='--')
@@ -767,7 +777,7 @@ class MPSE(object):
             ax[2].set_title('projections stats')
             ax[2].legend()
             ax[2].set_xlim([0,len(costs)])
-                
+
         if plot is True:
             plt.draw()
             plt.pause(0.2)
@@ -779,7 +789,7 @@ class MPSE(object):
             os.makedirs(location)
         for f in os.listdir(location):
             os.remove(os.path.join(location,f))
-            
+
         np.savetxt(location+'embedding.csv', self.embedding)
         for i in range(self.n_perspectives):
             np.savetxt(location+'projection_'+str(i)+'.csv',
@@ -798,7 +808,7 @@ class MPSE(object):
 ##### TESTS #####
 
 def basic(data, verbose=2, save_results=False, **kwargs):
-    
+
     #load distances if necessary
     if isinstance(data,str):
         import samples
@@ -808,15 +818,15 @@ def basic(data, verbose=2, save_results=False, **kwargs):
             kwargs[key] = value
     else:
         distances = data
-        
+
     mv = MPSE(distances,verbose=verbose, **kwargs)
-    
+
     mv.gd(**kwargs)
 
     #save outputs:
     if save_results is True:
         mv.save()
-        
+
     mv.plot_computations()
     mv.plot_embedding(title='final embeding')
     mv.plot_images()#edges=edges, labels=labels)
@@ -824,7 +834,7 @@ def basic(data, verbose=2, save_results=False, **kwargs):
     plt.pause(0.2)
     plt.show()
     return mv.embedding
-    
+
 if __name__=='__main__':
     print('mview.mpse : running tests')
 

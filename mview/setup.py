@@ -39,6 +39,7 @@ def setup_distances(data, shortest_path=False, min_distance=1e-4, **kwargs):
     """
     assert isinstance(data,np.ndarray)
     if len(data.shape) == 1:
+        print('len 1')
         assert distance.is_valid_y(data)
         distances = data
     else:
@@ -88,13 +89,13 @@ def setup_weights(distances, weights, max_weight=2.0, min_weight=1e-4):
         assert distances.shape == weights.shape
     else:
         assert weights is None
-        
+
     if weights is not None:
         if max_weight is not None:
             weights = np.minimum(weights,max_weight)
         if min_weight is not None:
             weights = np.maximum(weights,min_weight)
-            
+
     return weights
 
 def setup_distances_from_multiple_perspectives(data,data_args=None):
@@ -141,6 +142,7 @@ def setup_distances_from_multiple_perspectives(data,data_args=None):
 
     condensed_distances = []
     for i in range(n_perspectives):
+        print(data[i].shape)
         condensed_distances.append(setup_distances(data[i],**data_args[i]))
 
     return condensed_distances
@@ -151,7 +153,7 @@ def setup_distances_from_multiple_perspectives(data,data_args=None):
 
 def batch_indices(samples,n_samples):
     """\
-    Returns the indices corresponding to pairs from given indices from the 
+    Returns the indices corresponding to pairs from given indices from the
     condensed distance matrix list.
 
     Parameters
@@ -165,7 +167,7 @@ def batch_indices(samples,n_samples):
 
     Returns
     -------
-    
+
     indices : list
     List of indices of condensed distance matrix containing distances involving
     samples in batch.
