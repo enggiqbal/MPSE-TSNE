@@ -1,5 +1,4 @@
 *.pyc
 .DS_Store
 *.ipynb_checkpoints*
-mview/temp/*
 mview/temp2/*

@@ -7,7 +7,7 @@ from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 
 # sys.path.insert(1,'../..')
-sys.path.insert(1,'/Users/vahanhuroyan/Documents/MPSE/MPSE-TSNE')
+#sys.path.insert(1,'/Users/vahanhuroyan/Documents/MPSE/MPSE-TSNE')
 
 import mview
 

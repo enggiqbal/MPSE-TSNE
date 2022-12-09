@@ -31,7 +31,7 @@ def mnist(n_samples=1000, digits=None, **kwargs):
         os.remove(os.path.join(location,f))
     np.savetxt(location+'mnist_original_images.csv',X)
     np.savetxt(location+'mnist_original_labels.csv',labels)
-    
+
     X = np.array(X,dtype='float')/256
     return X, labels
 
@@ -96,7 +96,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
     data = {}
     if dataset == 'equidistant':
         length = n_samples*(n_samples-1)//2
-        for persp in range(n_perspectives):      
+        for persp in range(n_perspectives):
             distances.append(np.random.normal(1,0.1,length))
         data['image_colors'] = [n_samples-1]*n_perspectives
     elif dataset == 'disk':
@@ -192,6 +192,7 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         for ind in ['1','2','3']:
             filec = open(path+'discredit3_tsne_cluster_1000_'+ind+'.csv')
             array = np.array(list(csv.reader(filec)),dtype='float')
+            print(array)
             array += np.random.randn(len(array),len(array))*1e-4
             Y.append(array)
         distances = Y
@@ -221,6 +222,89 @@ def mload(dataset, n_samples=100, n_perspectives=2, **kwargs):
         distances = pride_and_prejudice.distances
         data['edges'] = pride_and_prejudice.edges
         data['sample_labels'] = pride_and_prejudice.names
+
+    elif dataset == 'jacob_credit':
+        import pandas as pd
+        from sklearn.metrics import pairwise_distances
+
+        #Process data
+        X = pd.read_csv(directory + '/jacob_credit/cc_data.csv')
+        X['gender'] = (X['gender'] == '\'F\'').astype(int)
+
+
+        remap = {
+            '\'Lower secondary\'': 0,
+            '\'Secondary / secondary special\'': 1,
+            '\'Incomplete higher\'': 2,
+            '\'Higher education\'': 3
+        }
+
+        X['education'] = X['education'].map(remap)
+        X = X.to_numpy()
+        X_norm = X / X.max(axis=0)
+        print(len(X_norm))
+        labels = X[:,1]
+
+        #Assign to variables
+        distances.append(np.delete(X_norm,1,axis=1))
+        distances.append(np.delete(X_norm,2,axis=1))
+        print(distances)
+        data['sample_colors'] = [X[:,2],labels]
+        data['sample_classes'] = [X[:,2],labels]
+
+    elif dataset == 'academic':
+
+        mydict = {"Graduate": 0,
+            "Dropout": 1,
+            "Enrolled": 2}
+
+        enc_rule = {-1: lambda l: mydict[l.decode()]}
+
+        raw = np.loadtxt(directory + "/jacob_credit/academic_cleaned.csv",delimiter=',',skiprows=1,converters=enc_rule)
+        #data = np.loadtxt("academic.csv",delimiter=';',skiprows=1,converters=enc_rule)
+
+
+        #raw = raw[:500]
+        #raw = raw[np.random.choice(raw.shape[0], 200, replace=False)]
+
+        labels = raw[:,-1]
+
+        X = np.delete(raw,[15,-1],axis=1)
+        X /= X.max(axis=0)
+
+        #X = X[:500]
+
+        distances.append(np.delete(X,[0,5,6,7,8,9,10,11,12,13,-1,-2,-3],axis=1))
+        distances.append(np.delete(X,[1,2,3,4,14,16,17,18,19,20,21,22,23,24,25,26,27,28],axis=1))
+
+
+        data['sample_colors'] = labels
+        data['sample_classes'] = labels
+
+    elif dataset == 'iris':
+        import pandas as pd
+
+        X = pd.read_csv(directory + '/jacob_credit/iris.csv',sep=',')
+
+        X.loc[X['variety'] == 'Setosa', 'variety'] = 0
+        X.loc[X['variety'] == 'Versicolor', 'variety'] = 1
+        X.loc[X['variety'] == 'Virginica', 'variety'] = 2
+
+        X = X.to_numpy().astype(float)
+
+        labels = X[:,-1]
+        X = np.delete(X,-1,1)
+        X = X/X.max(axis=0)
+
+        distances.append(np.delete(X,[2,3], 1) )
+        distances.append(np.delete( X, [0,1], 1))
+        print(distances)
+
+        data['sample_colors'] = labels
+        data['sample_classes'] = labels
+
+
+
     else:
         print('***dataset not found***')
     return distances, data

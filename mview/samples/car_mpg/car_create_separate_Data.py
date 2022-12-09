@@ -55,4 +55,6 @@ data = [a, b]
 
 # data = [a, b, c]
 
-results = mview.mpse_tsne(data, perplexity=30, show_plots=True, save_results=True, verbose=2)
+# results = mview.mpse_tsne(data, perplexity=30, show_plots=True, save_results=True, verbose=2)
+
+print(df1.head())
