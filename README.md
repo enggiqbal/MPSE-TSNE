@@ -1,8 +1,17 @@
 **Embedding Neighborhoods Simultaneously by t-Distributed Stochastic Neighbor Embeding: ENS-t-SNE**
 
-Please see the following video for a demonstration and explanation: [![ENS-t-SNE Demonstration Video](https://img.youtube.com/vi/WnZEO6tnoCY/0.jpg)](https://www.youtube.com/watch?v=WnZEO6tnoCY)
+Please see the following video for a demonstration and explanation (click on image): [![ENS-t-SNE Demonstration Video](https://img.youtube.com/vi/WnZEO6tnoCY/0.jpg)](https://www.youtube.com/watch?v=WnZEO6tnoCY)
 
 An example program and visualization script can be found in ```enstsne.py```
+
+The Palmer's Penguins dataset captured in 3D by ENS-t-SNE.
+![Palmer's Penguines](ENS-t-SNE/figs/penguins.gif)
+
+
+The USDA Food Composition dataset as captured by ENS-t-SNE.
+![USDA Food Composotion](ENS-t-SNE/figs/food_comp.gif)
+
+
 
 To import the ens-t-sne module, use 
 
