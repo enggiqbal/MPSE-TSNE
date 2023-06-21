@@ -152,6 +152,47 @@ if __name__ == "__main__":
     Emb = mv.embedding
     plot_3d(Emb,C,title="figs/enstsne3d.png")
 
-
     
+    from metrics import compute_all_metrics
 
+    x3 =  data[['Water_(g)','Vit_E_(mg)','Sodium_(mg)','Lipid_Tot_(g)','Energ_Kcal','Protein_(g)', 'Vit_B6_(mg)', 'Vit_B12_(µg)', 'Vit_D_µg']].to_numpy()
+
+    u3d = UMAP(n_components=3).fit_transform(x3)
+    plot_3d(u3d,C,title="figs/umap3d.png")
+    t3d = TSNE(n_components=3).fit_transform(x3)
+    plot_3d(t3d,C,title="figs/tsne3d.png")
+
+    three_stats = {
+        "enstsne": compute_all_metrics(Emb,x3,C),
+        "tsne":    compute_all_metrics(t3d,x3,C),
+        "umap":    compute_all_metrics(u3d,x3,C)
+    }
+
+    u1 = UMAP().fit_transform(x1)
+    u2 = UMAP().fit_transform(x2)
+    plot2d(u1,u2,C,title="figs/umap2d.png")
+    t1 = TSNE().fit_transform(x1)
+    t2 = TSNE().fit_transform(x2)
+    plot2d(t1,t2,C,title="figs/tsne2d.png")
+
+    view1 = {
+        "enstsne": compute_all_metrics(y1,x1,C),
+        "tsne":    compute_all_metrics(t1,x1,C),
+        "umap":    compute_all_metrics(u1,x1,C)        
+    }
+
+    view2 = {
+        "enstsne": compute_all_metrics(y2,x2,C),
+        "tsne":    compute_all_metrics(t2,x2,C),
+        "umap":    compute_all_metrics(u2,x2,C)        
+    }    
+
+    import pickle 
+    # open a file, where you ant to store the data
+    file = open('test.pkl', 'wb')
+
+    # dump information to that file
+    pickle.dump({"view1": view1, "view2": view2, "3d": three_stats}, file)
+
+    # close the file
+    file.close()    
