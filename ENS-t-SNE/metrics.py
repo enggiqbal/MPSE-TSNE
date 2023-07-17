@@ -20,8 +20,8 @@ def stress(X,d):
 
     from scipy.optimize import minimize_scalar
     min_a = minimize_scalar(stress)
-    #print("a is ",min_a.x)
-    return stress(a=min_a.x)
+    print("a is ",min_a.x)
+    return stress(a=1)
 
 def neighborhood_hit(X: np.array, d: np.array, k=7):
     diff = pairwise_distances(X)
@@ -61,14 +61,23 @@ def cluster_distance(H:np.array, X:np.array, y:np.array):
     dh = pairwise_distances(high_d_clusters)
     return stress(low_d_clusters,dh)    
 
-def compute_all_metrics(X:np.array,H:np.array,y:np.array):
-    d = pairwise_distances(H)
+def compute_all_metrics(X:np.array,d:np.array,y:np.array):
+    # d = pairwise_distances(H)
     return {
         "stress": stress(X,d),
-        "NH":     1-neighborhood_hit(X,d),
-        "kmeans": 1-kmean_acc(X,y),
-        "sil":    silhouette_score(X,y),
-        "CD":     cluster_distance(H,X,y)
+        "NE":     1-neighborhood_hit(X,d),
+        # "kmeans": 1-kmean_acc(X,y),
+        "inverse silhouette":    1-silhouette_score(X,y),
+        # "CD":     cluster_distance(H,X,y)
+    }
+
+def compute_all_3dmetrics(X: np.ndarray, d:np.ndarray, y:list[np.ndarray]):
+    return {
+        "stress": stress(X / np.max(X,axis=0),d),
+        "NE":     1-neighborhood_hit(X,d),
+        # "kmeans": 1-kmean_acc(X,y),
+        "inverse silhouette":    sum(1-silhouette_score(X,yi) for yi in y) / len(y),
+        # "CD":     cluster_distance(H,X,y)        
     }
 
 if __name__ == "__main__":
