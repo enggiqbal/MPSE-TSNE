@@ -98,9 +98,9 @@ if __name__ == "__main__":
 
     funcs = [
         ["synthetic", lambda : load_clusters(300, [10,10,10], [2,3,4])],
-        ["penguins", lambda : load_penguins()],
-        ["auto", lambda: load_auto()],
-        ["food", lambda: load_food()]
+        # ["penguins", lambda : load_penguins()],
+        # ["auto", lambda: load_auto()],
+        # ["food", lambda: load_food()]
         ]
     
     for name, f in funcs:

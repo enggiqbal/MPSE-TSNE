@@ -14,7 +14,7 @@ for fname in os.listdir("results/"):
 
         species = algs["ens-t-sne"].keys()
         penguin_means = { 
-                        "old-ens-t-sne": algs["old_ens"].values(),
+                        # "old-ens-t-sne": algs["old_ens"].values(),
                         "ens-t-sne": algs["ens-t-sne"].values(),
                         "mds"      : algs["mds"].values(), 
                         "tsne"   : algs["tsne"].values(), 
@@ -29,8 +29,8 @@ for fname in os.listdir("results/"):
 
         for attribute, measurement in penguin_means.items():
             offset = width * multiplier
-            measurement = list(measurement)
-            rects = ax.bar(x + offset, measurement, width, label=attribute)
+            measurement = list(measurement)[2]
+            rects = ax.bar(x + offset, measurement, width, label=attribute if attribute != "inverse silhouette" else "avg_clust_dist")
             ax.bar_label(rects, padding=3,fmt="%.3f")
             multiplier += 1
 
@@ -41,4 +41,4 @@ for fname in os.listdir("results/"):
         ax.legend(loc='upper left')
         # ax.set_ylim(0, 2)
 
-        plt.savefig(f"figs/with-old-{fname.split('.')[0]}-{view}.png")
+        plt.savefig(f"figs/{fname.split('.')[0]}-{view}.png")
