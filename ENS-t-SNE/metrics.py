@@ -82,13 +82,12 @@ def within_class_distance_3d(data, labels):
 
     print(within_class_distance, total_sum_distance)
 
-    return within_class_distance / total_sum_distance
+    return within_class_distance / np.max(pairwise_distances(data))
 
 def squared_distance(point1, point2): 
     return np.sqrt( np.sum( np.square( point2-point1 ) ) )
 
 def total_sum_of_squared_distances(data_points): 
-    print(data_points)
     total_squared_distance = 0 
     for i in range(len(data_points)): 
         for j in range(i + 1, len(data_points)): 
@@ -122,7 +121,7 @@ def compute_all_3dmetrics(X: np.ndarray, d:np.ndarray, y:list[np.ndarray]):
         "stress": stress(X,d),
         "NE":     1-neighborhood_hit(X,d),
         # "kmeans": 1-kmean_acc(X,y),
-        "within_cluster_variance":    sum(within_class_distance_3d(X,yi)  for yi in y) / len(y),
+        "CEV":    sum(within_class_distance_3d(X,yi)  for yi in y) / len(y),
         # "CD":     cluster_distance(H,X,y)        
     }
 

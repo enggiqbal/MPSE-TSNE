@@ -3,6 +3,8 @@ import numpy as np
 import pickle 
 import os 
 
+cmap = plt.get_cmap("Set2")
+
 for fname in os.listdir("results/"):
     print(fname)
 
@@ -19,26 +21,25 @@ for fname in os.listdir("results/"):
                         "mds"      : algs["mds"].values(), 
                         "tsne"   : algs["tsne"].values(), 
                         "umap"   : algs["umap"].values(),
-                        "mpse"   : algs["mpse"].values()}
+                        "mpse"   : algs["mpse"].values()
+                        }
 
-        x = np.arange(len(species))  # the label locations
-        width = 1 / (len(penguin_means) + 1) # the width of the bars
+        x = np.arange(len(species))  
+        width = 1 / (len(penguin_means) + 1) 
         multiplier = 0
 
         fig, ax = plt.subplots(layout='constrained')
 
-        for attribute, measurement in penguin_means.items():
+        for i, (attribute, measurement) in enumerate(penguin_means.items()):
             offset = width * multiplier
-            measurement = list(measurement)[2]
-            rects = ax.bar(x + offset, measurement, width, label=attribute if attribute != "inverse silhouette" else "avg_clust_dist")
+            rects = ax.bar(x + offset, measurement, width, color=cmap(i), label=attribute)
             ax.bar_label(rects, padding=3,fmt="%.3f")
             multiplier += 1
 
-        # Add some text for labels, title and custom x-axis tick labels, etc.
-        # ax.set_ylabel('Length (mm)')
         ax.set_title(f"{view} {fname.split('.')[0]} data")
-        ax.set_xticks(x + width, species)
-        ax.legend(loc='upper left')
+        ax.set_xticks(x + width, [s if s != "cluster variance" else "CEV" for s in species])
+        if fname.split(".")[0] == "penguins":
+            ax.legend(loc='upper left')
         # ax.set_ylim(0, 2)
 
         plt.savefig(f"figs/{fname.split('.')[0]}-{view}.png")

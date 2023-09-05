@@ -307,7 +307,7 @@ def map_to_int(data: list[any]):
 from sklearn.metrics import pairwise_distances
 def load_clusters(n=100, dims= [5,6], n_clusters = [2,3]):
 
-    X, labels,subspaces = get_clusters(n,n_clusters,dims,random_state=42)
+    X, labels,subspaces = get_clusters(n,n_clusters,dims)
     
     dists = [pairwise_distances(x) for x in subspaces]
 
