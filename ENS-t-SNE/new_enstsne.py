@@ -5,7 +5,84 @@ import pylab as plt
 from tqdm import tqdm
 from numba import njit
 
+import matplotlib
+
 MACHINE_EPSILON = 1e-15
+
+tab10 = {0: "red", 
+        1: "blue",
+        2: "orange",
+        3: "tab:red",
+        4: "tab:purple",}
+
+colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "black", "lightblue", "pink", "yellow", "brown"]
+markers = ["o", "s", "v", "p", "*", "^" ]
+fillstyles = ["full", "none", "top", "bottom", "left", "right"]
+
+markerstyles = [
+    colors,
+    markers,
+    fillstyles
+]
+
+cmap = plt.get_cmap("cool")
+
+def vis_2d(data,labels,title=None):
+    fig, axes = plt.subplots(1,len(data))
+
+    pair_labels = np.zeros((data[0].shape[0], 3),dtype=np.int32)
+    for i in range(data[0].shape[0]):
+        for j in range(len(labels)): pair_labels[i,j] = labels[j][i]
+
+    num_clusts = np.max(pair_labels,axis=0)
+    print(labels[0])
+
+    color = dict(zip(range(10), [i/10 for i in range(10)]))
+    l = 0
+    for ax, X in zip(axes,data):
+        plt.clf()
+        fig, ax = plt.subplots()
+        for i in range(num_clusts[0] + 1):
+            for j in range(num_clusts[1] + 1):
+                for k in range(num_clusts[2] + 1):
+                    emb = X[ (pair_labels[:,0] == i) & (pair_labels[:,1] == j) & (pair_labels[:,2] == k) ]
+                    x,y = emb[:,0], emb[:,1]
+                    style = matplotlib.markers.MarkerStyle(markers[j],fillstyle=fillstyles[k])
+                    print(color[i])
+                    ax.scatter(x,y,c=cmap(color[i]),marker=style,alpha=1,linewidths=1)
+                    plt.xticks(color="w")
+                    plt.yticks(color="w")
+        if title: plt.savefig(f"{title}_{l}.png")
+        l += 1
+
+    if title: plt.savefig(title)
+    else: plt.show()
+
+def vis_3d(X, labels, title=None):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1,projection='3d')
+
+    pair_labels = np.zeros((X.shape[0], 3),dtype=np.int32)
+    for i in range(X.shape[0]):
+        for j in range(len(labels)): pair_labels[i,j] = labels[j][i]
+
+    num_clusts = np.max(pair_labels,axis=0)
+
+    for i in range(num_clusts[0] + 1):
+        for j in range(num_clusts[1] + 1):
+            for k in range(num_clusts[2] + 1):
+                emb = X[(pair_labels[:,0] == i) & (pair_labels[:,1] == j) & (pair_labels[:,2] == k)]
+                x,y,z = emb[:,0], emb[:,1], emb[:,2]
+                style = matplotlib.markers.MarkerStyle(markers[j],fillstyle=fillstyles[k])
+                ax.scatter(x,y,z,c=colors[i], marker=style, alpha=0.9)
+    plt.xticks(color="w")
+    plt.yticks(color="w")
+    ax.set_zticks(ax.get_zticks(), [" " for _ in ax.get_zticks()])
+
+    if title: plt.savefig(f"{title}.png")
+    else: plt.show()    
+
 
 
 def get_clusters(n_points, n_clusters=[2], n_dimensions=[2], noise=0.1, random_state=None):
@@ -23,6 +100,26 @@ def get_clusters(n_points, n_clusters=[2], n_dimensions=[2], noise=0.1, random_s
         cur_dim += n_dim
     
     return data, labels, subspaces
+
+def get_clusters_distance(n_points, n_clusters=[2], noise=0.1):
+    full_dists = list() 
+    labels = list()
+    for clust_size in n_clusters:
+        labels.append(np.random.randint(0,clust_size,size=(n_points)))
+        dists = np.zeros((n_points,n_points))
+        for i in range(n_points):
+            for j in range(n_points):
+                if i == j: continue 
+                if labels[-1][i] == labels[-1][j]:
+                    dists[i,j] = np.random.normal(0,1e-5)
+                else:
+                    dists[i,j] = np.random.normal(0,1)
+        full_dists.append(dists)
+
+    from sklearn.manifold import MDS 
+    avg_dists = sum(full_dists, start=np.zeros_like(full_dists[0])) / len(full_dists)
+    X = MDS(n_components=100,dissimilarity="precomputed").fit_transform(avg_dists)
+    return full_dists, labels, X
 
 # @njit
 def inv_sq(embedding):
@@ -417,57 +514,47 @@ def load_food():
 
     return [pairwise_distances(x1), pairwise_distances(x2)], [y,y], np.concatenate([x1,x2], axis=1)
 
+def load_wine(a=[0,1,2],b=[3,4,5]):
+    import pandas as pd 
+    data = pd.read_csv("datasets/wine/winequality.csv")
+
+    x = data.to_numpy()
+
+    ind = np.random.choice(data.shape[0],3000)    
+    x = x[ind, :]
+
+    y1 = x[:, 11].copy()
+
+    x /= np.max(x,axis=0)
+    x1 = x[:,a]
+    x2 = x[:,b]
+
+    # _,y1 = np.unique(y1,return_inverse=True)
+    # y1 /= np.max(y1)
+    y2 = x[:, 12]
+
+    return [pairwise_distances(x1), pairwise_distances(x2)], [y1,y2], x
+
 
 
 
 if __name__ == "__main__":
-
     # dists, labels = load_fashion()
 
-    # dists, labels = load_clusters(n=300, dims=[10,10], n_clusters=[4,3])
-    dists, labels, X = load_auto()
-    print(labels)
-
-    # # d3 = pairwise_distances(x3)
-    # mom = [1,5,12,24]
-    # fix = [True, False]
-    # embeddings = list()
-    # for i in range(len(mom)):
-    #     for f in fix:
-    #         enstsne = ENSTSNE(dists,30,labels=labels,early_exaggeration=mom[i],fixed=f)
-
-    #         enstsne.gd(1000,0.1,50)
-    #         embeddings.append(enstsne)
-
-    #     # enstsne.vis_2d()
-
-    # # fig, ax = plt.subplots()
-    # for emb in embeddings:
-    #     plt.plot(np.arange(len(emb.hist)), emb.hist, label = f"{'fixed' if emb.fixed else 'flex'} early exaggeration {emb.ee}")
-    # plt.legend()
-    # plt.yscale("log")
-
-    # # plt.show()
-
-    # for enstsne in embeddings:
-    #     enstsne.vis_2d()
-    #     plt.suptitle(f"{'fixed' if enstsne.fixed else 'flex'}; Early exaggeration: {enstsne.ee}")
-    # plt.show()
+    dists, labels, X = load_clusters(n=300, dims=[10,10], n_clusters=[4,3])
+    # dists, labels, X = load_wine()
+    
+    enstsne = ENSTSNE(dists,30,labels=labels)
+    enstsne.gd(1000)
+    vis_2d(enstsne.get_images(),labels,"test")
 
 
-    # import pandas as pd
-    # #Load food comp data into pandas df 
-    # data = pd.read_csv("datasets/food_comp/food_comp_processed.csv")
+    from pyDRMetrics.pyDRMetrics import *
+    drm = DRMetrics(X,enstsne.get_embedding())
+    data = drm.get_json()
+    print(data)
+    print(type(data))
 
-    # #Parse data
-    # #First subspace; water+lipids
-    # x1 = data[['Water_(g)','Vit_E_(mg)','Sodium_(mg)','Lipid_Tot_(g)','Energ_Kcal']].to_numpy()
-
-    # #second subspace; proteins+B vitamins
-    # x2 = data[['Protein_(g)', 'Vit_B6_(mg)', 'Vit_B12_(µg)', 'Vit_D_µg']].to_numpy()   
-
-    # d1 = pairwise_distances(x1) 
-    # d2 = pairwise_distances(x2)
-    # enstsne = ENSTSNE([d1,d2],30)
-    # enstsne.gd(1000,0.9,50)
-    # enstsne.vis_2d() 
+    import json 
+    print(json.loads(data))
+    print(type(json.loads(data)))

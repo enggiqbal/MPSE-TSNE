@@ -106,24 +106,42 @@ def total_sum_of_squared_distances(data_points):
 #     within_class_distance = np.mean(within_class_distances) 
 #     return within_class_distance
 
-def compute_all_metrics(X:np.array,d:np.array,y:np.array):
+def get_trustworthiness(high_d, low_d, k=5):
+    from sklearn.manifold import trustworthiness
+    return trustworthiness(high_d,low_d, n_neighbors=k)
+
+def compute_all_metrics(X:np.array,d:np.array,y:np.array,full:np.array):
     # d = pairwise_distances(H)
-    return {
+    from pyDRMetrics.pyDRMetrics import DRMetrics
+    import json
+    drm = DRMetrics(full,X)
+    drm_data = json.loads(drm.get_json())
+
+    custom =  {
         "stress": stress(X,d),
         "NE":     1-neighborhood_hit(X,d),
         # "kmeans": 1-kmean_acc(X,y),
         "inverse silhouette":    1-silhouette_score(X,y),
+        "trustworthiness" : get_trustworthiness(full,X)
         # "CD":     cluster_distance(H,X,y)
     }
+    return drm_data | custom
 
-def compute_all_3dmetrics(X: np.ndarray, d:np.ndarray, y:list[np.ndarray]):
-    return {
+def compute_all_3dmetrics(X: np.ndarray, d:np.ndarray, y:list[np.ndarray],full:np.ndarray):
+    from pyDRMetrics.pyDRMetrics import DRMetrics
+    import json
+    drm = DRMetrics(full,X)
+    drm_data = json.loads(drm.get_json())
+    
+    custom = {
         "stress": stress(X,d),
         "NE":     1-neighborhood_hit(X,d),
         # "kmeans": 1-kmean_acc(X,y),
         "CEV":    sum(within_class_distance_3d(X,yi)  for yi in y) / len(y),
+        "trustworthiness": get_trustworthiness(full,X)
         # "CD":     cluster_distance(H,X,y)        
     }
+    return drm_data | custom
 
 if __name__ == "__main__":
     Y = np.random.uniform(-1,1,(100,5))

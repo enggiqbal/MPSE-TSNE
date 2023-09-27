@@ -13,6 +13,8 @@ for fname in os.listdir("results/"):
     file.close()
 
     for view,algs in data.items():
+        for alg in algs:
+            del algs[alg]["kmax"]
 
         species = algs["ens-t-sne"].keys()
         penguin_means = { 
@@ -24,6 +26,7 @@ for fname in os.listdir("results/"):
                         "mpse"   : algs["mpse"].values()
                         }
 
+
         x = np.arange(len(species))  
         width = 1 / (len(penguin_means) + 1) 
         multiplier = 0
@@ -33,7 +36,7 @@ for fname in os.listdir("results/"):
         for i, (attribute, measurement) in enumerate(penguin_means.items()):
             offset = width * multiplier
             rects = ax.bar(x + offset, measurement, width, color=cmap(i), label=attribute)
-            ax.bar_label(rects, padding=3,fmt="%.3f")
+            # ax.bar_label(rects, padding=3,fmt="%.3f")
             multiplier += 1
 
         ax.set_title(f"{view} {fname.split('.')[0]} data")
@@ -41,5 +44,5 @@ for fname in os.listdir("results/"):
         if fname.split(".")[0] == "penguins":
             ax.legend(loc='upper left')
         # ax.set_ylim(0, 2)
-
+        plt.legend()
         plt.savefig(f"figs/{fname.split('.')[0]}-{view}.png")

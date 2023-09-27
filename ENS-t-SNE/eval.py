@@ -64,8 +64,8 @@ def vis_2d(data,labels,title=None):
 
     l = 0
     for ax, X in zip(axes,data):
-        plt.clf()
-        fig, ax = plt.subplots()
+        # plt.clf()
+        # fig, ax = plt.subplots()
         for i in range(num_clusts[0] + 1):
             for j in range(num_clusts[1] + 1):
                 for k in range(num_clusts[2] + 1):
@@ -75,7 +75,7 @@ def vis_2d(data,labels,title=None):
                     ax.scatter(x,y,c=colors[i],marker=style,alpha=1,linewidths=1)
                     plt.xticks(color="w")
                     plt.yticks(color="w")
-        if title: plt.savefig(f"figs/test{l}.pdf")
+        # if title: plt.savefig(f"figs/test{l}.pdf")
         l += 1
 
     if title: plt.savefig(title)
@@ -85,11 +85,11 @@ from metrics import compute_all_metrics, compute_all_3dmetrics
 from new_enstsne import get_clusters, ENSTSNE
 from sklearn.metrics import pairwise_distances
 
-def eval(dists, labels,full,dataname=""):
+def eval(dists, labels,full,high_d,dataname=""):
     #Compute enstsne, old, new
-    old_ens = mview.mpse_tsne(dists)
-    old_ens3d = old_ens.embedding
-    old_ens = old_ens.images
+    # old_ens = mview.mpse_tsne(dists)
+    # old_ens3d = old_ens.embedding
+    # old_ens = old_ens.images
     
     new_ens = ENSTSNE(dists, 30, labels, early_exaggeration=5)
     new_ens.gd(1000,lr=50)
@@ -116,24 +116,26 @@ def eval(dists, labels,full,dataname=""):
 
 
     #Compute metrics
-    algs = ["old_ens", "ens-t-sne", "mpse", "tsne", "umap", "mds"]
-    embeddings = [old_ens, new_ens, mpse, tsne, umap, mds]
+    algs = [ "ens-t-sne", "mpse", "tsne", "umap", "mds"]
+    embeddings = [ new_ens, mpse, tsne, umap, mds]
     vals = {f"view-{i}": {
-        alg: compute_all_metrics(embedding[i],dists[i],labels[i]) for alg, embedding in zip(algs,embeddings)
+        alg: compute_all_metrics(embedding[i],dists[i],labels[i],high_d) for alg, embedding in zip(algs,embeddings)
     } for i,_ in enumerate(dists) }
 
-    embeddings3d = [old_ens3d, enstsne3d, mpse3d, tsne3d, umap3d, mds3d]
-    vals["3d"] = {alg: compute_all_3dmetrics(embedding,full, labels) for alg, embedding in zip(algs,embeddings3d)}
+    embeddings3d = [ enstsne3d, mpse3d, tsne3d, umap3d, mds3d]
+    vals["3d"] = {alg: compute_all_3dmetrics(embedding,full, labels,high_d) for alg, embedding in zip(algs,embeddings3d)}
 
     for alg, emb in zip(algs, embeddings3d):
-        vis_3d(emb, labels, f"figs/3d_{dataname}_{alg}.pdf")
+        vis_3d(emb, labels, f"figs/{dataname}_{alg}_3d.pdf")
+    for alg, emb in zip(algs,embeddings):
+        vis_2d(emb,labels,f"figs/{dataname}_{alg}_2d.pdf")
     
     for key in vals: 
         print(f"{key} -> {vals[key].keys()}")
 
     return vals
 
-from new_enstsne import load_clusters, load_penguins, load_auto, load_food
+from new_enstsne import load_clusters, load_penguins, load_auto, load_food, load_fashion, load_cc, load_wine, load_mnist
 def find_enstsne():
 
     dists, labels, X = load_clusters(400, [20,20,20], [4,3,2])
@@ -159,32 +161,33 @@ def find_enstsne():
 
 
 
+
 if __name__ == "__main__":
-    find_enstsne()
-    # funcs = [
-    #     ["synthetic", lambda : load_clusters(300, [10,10,10], [2,2,2])],
-    #     ["penguins", lambda : load_penguins()],
-    #     ["auto", lambda: load_auto()],
-    #     ["food", lambda: load_food()]
-    #     ]
+    # find_enstsne()
+    funcs = [
+        ["synthetic", lambda : load_clusters(300, [10,10,10], [4,3,2])],
+        ["penguins", lambda : load_penguins()],
+        ["auto", lambda: load_auto()],
+        ["food", lambda: load_food()],
+        ["fashion", lambda: load_fashion()],
+        ["mnist", lambda: load_mnist()],
+        # ["credit_card", lambda: load_cc()],
+        ["wine", lambda: load_wine()]
+        ]
     
-    # for name, f in funcs:
-    #     dists, labels, X = f()
+    for name, f in funcs:
+        dists, labels, X = f()
 
-    #     results = eval(dists,labels,pairwise_distances(X), name)
+        results = eval(dists,labels,pairwise_distances(X),X,name)
 
-    #     import pickle 
-    #     # open a file, where you ant to store the data
-    #     file = open(f'results/{name}.pkl', 'wb')
+        import pickle 
+        # open a file, where you ant to store the data
+        file = open(f'results/{name}.pkl', 'wb')
 
-    #     # dump information to that file
-    #     pickle.dump(results, file)
+        # dump information to that file
+        pickle.dump(results, file)
 
-    #     # close the file
-    #     file.close()    
+        # close the file
+        file.close()    
 
 
-
-    """
-    Why are we losing in cluster distance? All clusters equidistant.
-    """
