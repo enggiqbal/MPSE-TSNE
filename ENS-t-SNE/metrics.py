@@ -143,11 +143,41 @@ def compute_all_3dmetrics(X: np.ndarray, d:np.ndarray, y:list[np.ndarray],full:n
     }
     return drm_data | custom
 
+def updated_metrics_2d(embedding, high_d, labels):
+    from andreas_metrics import metric_continuity, metric_trustworthiness, metric_neighborhood_hit, metric_pq_normalized_stress
+    D_low = pairwise_distances(embedding)
+
+    results = {
+        "continuity": metric_continuity(high_d, D_low, 5), 
+        "trustworthiness": metric_trustworthiness(high_d, D_low, 5),
+        "NH": metric_neighborhood_hit(embedding, labels, 7),
+        "stress": stress(embedding,high_d)
+    }
+    return results
+
+
+def updated_metrics_3d(embedding, high_d, labels):
+    from andreas_metrics import metric_continuity, metric_trustworthiness, metric_neighborhood_hit, metric_pq_normalized_stress
+
+    y = [tuple([labels[i][j] for i in range(len(labels))]) for j in range(labels[0].shape[0])]
+    tuplemap = dict(zip(set(y), range(len(y))))
+    y = np.array([tuplemap[x] for x in y])
+    
+    D_low = pairwise_distances(embedding)
+    D_high = pairwise_distances(high_d)
+
+    results = {
+        "continuity": metric_continuity(D_high, D_low, 5), 
+        "trustworthiness": metric_trustworthiness(D_high, D_low, 5),
+        "NH": metric_neighborhood_hit(embedding, y, 7),
+        "stress": stress(embedding,D_high)
+    }
+    return results
+
+
+
 if __name__ == "__main__":
-    Y = np.random.uniform(-1,1,(100,5))
-
-    from sklearn.manifold import TSNE
-    X = TSNE().fit_transform(Y)
-
-    s = neighborhood_hit(X,pairwise_distances(Y))
+    from new_enstsne import load_penguins
+    dists, labels, X = load_penguins()
+    updated_metrics_3d(None, None, labels)
 
