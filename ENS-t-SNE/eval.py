@@ -127,6 +127,8 @@ def eval(dists, labels,full,high_d,dataname=""):
 
     for alg, emb in zip(algs, embeddings3d):
         vis_3d(emb, labels, f"figs/{dataname}_{alg}_3d.pdf")
+        np.savetxt(f"embeddings/{dataname}_{alg}_3d.txt",emb)
+
     for alg, emb in zip(algs,embeddings):
         vis_2d(emb,labels,f"figs/{dataname}_{alg}_2d.pdf")
     
@@ -135,7 +137,46 @@ def eval(dists, labels,full,high_d,dataname=""):
 
     return vals
 
-from new_enstsne import load_clusters, load_penguins, load_auto, load_food, load_fashion, load_cc, load_wine, load_mnist
+from metrics import updated_metrics_3d, updated_metrics_2d
+def eval_small(dists, labels,full,high_d,dataname=""):
+    #Compute enstsne, old, new
+    # old_ens = mview.mpse_tsne(dists)
+    # old_ens3d = old_ens.embedding
+    # old_ens = old_ens.images
+    
+    new_ens = ENSTSNE(dists, 30, labels, early_exaggeration=5)
+    new_ens.gd(1000,lr=50)
+    enstsne3d = new_ens.get_embedding()
+    new_ens = new_ens.get_images()
+
+    #Compute mpse 
+    mv = mview.basic(dists, verbose=2, smart_initialize=True, max_iter=1000,learning_rate=0.001)
+    mpse3d = mv.embedding
+    mpse = mv.images
+
+    #Compute metrics
+    algs = [ "ens-t-sne", "mpse"]
+    embeddings = [ new_ens, mpse]
+    vals = {f"view-{i}": {
+        alg: updated_metrics_2d(embedding[i],dists[i],labels[i]) for alg, embedding in zip(algs,embeddings)
+    } for i,_ in enumerate(dists) }
+
+    embeddings3d = [ enstsne3d, mpse3d]
+    vals["3d"] = {alg: updated_metrics_3d(embedding,full, labels) for alg, embedding in zip(algs,embeddings3d)}
+
+    for alg, emb in zip(algs, embeddings3d):
+        vis_3d(emb, labels, f"figs/{dataname}_{alg}_3d.pdf")
+        np.savetxt(f"embeddings/{dataname}_{alg}_3d.txt",emb)
+
+    for alg, emb in zip(algs,embeddings):
+        vis_2d(emb,labels,f"figs/{dataname}_{alg}_2d.pdf")
+    
+    for key in vals: 
+        print(f"{key} -> {vals[key].keys()}")
+
+    return vals
+
+# from new_enstsne import load_clusters, load_penguins, load_auto, load_food, load_fashion, load_cc, load_wine, load_mnist
 def find_enstsne():
 
     dists, labels, X = load_clusters(400, [20,20,20], [4,3,2])
@@ -161,24 +202,29 @@ def find_enstsne():
 
 
 
-
+from new_enstsne import load_clusters, load_penguins, load_auto, load_fashion, load_food, load_mnist, load_cc
 if __name__ == "__main__":
     # find_enstsne()
     funcs = [
-        ["synthetic", lambda : load_clusters(300, [10,10,10], [4,3,2])],
+        ["synthetic", lambda : load_clusters(300, [10,10], [2,3])],
         ["penguins", lambda : load_penguins()],
         ["auto", lambda: load_auto()],
         ["food", lambda: load_food()],
-        ["fashion", lambda: load_fashion()],
+        # ["fashion", lambda: load_fashion()],
         ["mnist", lambda: load_mnist()],
         # ["credit_card", lambda: load_cc()],
-        ["wine", lambda: load_wine()]
+        # ["wine", lambda: load_wine()]
         ]
     
     for name, f in funcs:
         dists, labels, X = f()
 
-        results = eval(dists,labels,pairwise_distances(X),X,name)
+        results = eval_small(dists,labels,pairwise_distances(X),X,name)
+
+        lab = np.array(labels)
+        np.savetxt(f"embeddings/labels_{name}.txt", lab.T)
+
+        # results = {}
 
         import pickle 
         # open a file, where you ant to store the data
