@@ -66,13 +66,15 @@ def vis_2d(data,labels,title=None):
     for ax, X in zip(axes,data):
         # plt.clf()
         # fig, ax = plt.subplots()
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
         for i in range(num_clusts[0] + 1):
             for j in range(num_clusts[1] + 1):
                 for k in range(num_clusts[2] + 1):
                     emb = X[ (pair_labels[:,0] == i) & (pair_labels[:,1] == j) & (pair_labels[:,2] == k) ]
                     x,y = emb[:,0], emb[:,1]
                     style = matplotlib.markers.MarkerStyle(markers[j],fillstyle=fillstyles[k])
-                    ax.scatter(x,y,c=colors[i],marker=style,alpha=1,linewidths=1)
+                    ax.scatter(x,y,c=colors[i],marker=style,alpha=0.8,linewidths=1)
                     plt.xticks(color="w")
                     plt.yticks(color="w")
         # if title: plt.savefig(f"figs/test{l}.pdf")
@@ -80,6 +82,35 @@ def vis_2d(data,labels,title=None):
 
     if title: plt.savefig(title)
     else: plt.show()
+
+def vis_2d_per_proj(data,labels,title=None):
+    pair_labels = np.zeros((data[0].shape[0], 3),dtype=np.int32)
+    for i in range(data[0].shape[0]):
+        for j in range(len(labels)): pair_labels[i,j] = labels[j][i]
+
+    num_clusts = np.max(pair_labels,axis=0)
+
+    l = 0
+    for X in data:
+        plt.clf()
+        fig, ax = plt.subplots()
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        for i in range(num_clusts[0] + 1):
+            for j in range(num_clusts[1] + 1):
+                for k in range(num_clusts[2] + 1):
+                    emb = X[ (pair_labels[:,0] == i) & (pair_labels[:,1] == j) & (pair_labels[:,2] == k) ]
+                    x,y = emb[:,0], emb[:,1]
+                    style = matplotlib.markers.MarkerStyle(markers[j],fillstyle=fillstyles[k])
+                    ax.scatter(x,y,c=colors[i],marker=style,alpha=0.8,linewidths=1)
+                    plt.xticks(color="w")
+                    plt.yticks(color="w")
+        if title: plt.savefig(f"figs/test{l}.pdf")
+        else: plt.show()
+        l += 1
+
+    if title: plt.savefig(title)
+    else: plt.show()    
 
 from metrics import compute_all_metrics, compute_all_3dmetrics
 from new_enstsne import get_clusters, ENSTSNE
@@ -119,11 +150,11 @@ def eval(dists, labels,full,high_d,dataname=""):
     algs = [ "ens-t-sne", "mpse", "tsne", "umap", "mds"]
     embeddings = [ new_ens, mpse, tsne, umap, mds]
     vals = {f"view-{i}": {
-        alg: compute_all_metrics(embedding[i],dists[i],labels[i],high_d) for alg, embedding in zip(algs,embeddings)
+        alg: updated_metrics_2d(embedding[i],dists[i],labels[i]) for alg, embedding in zip(algs,embeddings)
     } for i,_ in enumerate(dists) }
 
     embeddings3d = [ enstsne3d, mpse3d, tsne3d, umap3d, mds3d]
-    vals["3d"] = {alg: compute_all_3dmetrics(embedding,full, labels,high_d) for alg, embedding in zip(algs,embeddings3d)}
+    vals["3d"] = {alg: updated_metrics_3d(embedding,full, labels) for alg, embedding in zip(algs,embeddings3d)}
 
     for alg, emb in zip(algs, embeddings3d):
         vis_3d(emb, labels, f"figs/{dataname}_{alg}_3d.pdf")
@@ -219,7 +250,7 @@ if __name__ == "__main__":
     for name, f in funcs:
         dists, labels, X = f()
 
-        results = eval_small(dists,labels,pairwise_distances(X),X,name)
+        results = eval(dists,labels,pairwise_distances(X),X,name)
 
         lab = np.array(labels)
         np.savetxt(f"embeddings/labels_{name}.txt", lab.T)

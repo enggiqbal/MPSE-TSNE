@@ -100,7 +100,7 @@ def basic(data, data_args=None, fixed_projections=None,
     if smart_initialize is True and fixed_projections is None:
         vis.smart_initialize()
     if visualization_method == 'mds' and 'batch_size' not in kwargs:
-        kwargs['batch_size'] = 10
+        kwargs['batch_size'] = 50
     vis.gd(**kwargs)
     
     #old variables:

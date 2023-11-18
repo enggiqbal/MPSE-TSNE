@@ -5,84 +5,7 @@ import pylab as plt
 from tqdm import tqdm
 from numba import njit
 
-import matplotlib
-
 MACHINE_EPSILON = 1e-15
-
-tab10 = {0: "red", 
-        1: "blue",
-        2: "orange",
-        3: "tab:red",
-        4: "tab:purple",}
-
-colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "black", "lightblue", "pink", "yellow", "brown"]
-markers = ["o", "s", "v", "p", "*", "^" ]
-fillstyles = ["full", "none", "top", "bottom", "left", "right"]
-
-markerstyles = [
-    colors,
-    markers,
-    fillstyles
-]
-
-cmap = plt.get_cmap("cool")
-
-def vis_2d(data,labels,title=None):
-    fig, axes = plt.subplots(1,len(data))
-
-    pair_labels = np.zeros((data[0].shape[0], 3),dtype=np.int32)
-    for i in range(data[0].shape[0]):
-        for j in range(len(labels)): pair_labels[i,j] = labels[j][i]
-
-    num_clusts = np.max(pair_labels,axis=0)
-    print(labels[0])
-
-    color = dict(zip(range(10), [i/10 for i in range(10)]))
-    l = 0
-    for ax, X in zip(axes,data):
-        plt.clf()
-        fig, ax = plt.subplots()
-        for i in range(num_clusts[0] + 1):
-            for j in range(num_clusts[1] + 1):
-                for k in range(num_clusts[2] + 1):
-                    emb = X[ (pair_labels[:,0] == i) & (pair_labels[:,1] == j) & (pair_labels[:,2] == k) ]
-                    x,y = emb[:,0], emb[:,1]
-                    style = matplotlib.markers.MarkerStyle(markers[j],fillstyle=fillstyles[k])
-                    print(color[i])
-                    ax.scatter(x,y,c=cmap(color[i]),marker=style,alpha=1,linewidths=1)
-                    plt.xticks(color="w")
-                    plt.yticks(color="w")
-        if title: plt.savefig(f"{title}_{l}.png")
-        l += 1
-
-    if title: plt.savefig(title)
-    else: plt.show()
-
-def vis_3d(X, labels, title=None):
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1,projection='3d')
-
-    pair_labels = np.zeros((X.shape[0], 3),dtype=np.int32)
-    for i in range(X.shape[0]):
-        for j in range(len(labels)): pair_labels[i,j] = labels[j][i]
-
-    num_clusts = np.max(pair_labels,axis=0)
-
-    for i in range(num_clusts[0] + 1):
-        for j in range(num_clusts[1] + 1):
-            for k in range(num_clusts[2] + 1):
-                emb = X[(pair_labels[:,0] == i) & (pair_labels[:,1] == j) & (pair_labels[:,2] == k)]
-                x,y,z = emb[:,0], emb[:,1], emb[:,2]
-                style = matplotlib.markers.MarkerStyle(markers[j],fillstyle=fillstyles[k])
-                ax.scatter(x,y,z,c=colors[i], marker=style, alpha=0.9)
-    plt.xticks(color="w")
-    plt.yticks(color="w")
-    ax.set_zticks(ax.get_zticks(), [" " for _ in ax.get_zticks()])
-
-    if title: plt.savefig(f"{title}.png")
-    else: plt.show()    
-
 
 
 def get_clusters(n_points, n_clusters=[2], n_dimensions=[2], noise=0.1, random_state=None):
@@ -93,33 +16,13 @@ def get_clusters(n_points, n_clusters=[2], n_dimensions=[2], noise=0.1, random_s
     subspaces = list()
     cur_dim = 0
     for n_clust, n_dim in zip(n_clusters,n_dimensions):
-        tmp,lab = make_blobs(n_points,n_features=n_dim,centers=n_clust, random_state=random_state)
+        tmp,lab = make_blobs(n_points,n_features=n_dim,centers=n_clust)
         labels.append(lab)
         data[:,cur_dim:n_dim+cur_dim] = tmp 
         subspaces.append(tmp)
         cur_dim += n_dim
     
     return data, labels, subspaces
-
-def get_clusters_distance(n_points, n_clusters=[2], noise=0.1):
-    full_dists = list() 
-    labels = list()
-    for clust_size in n_clusters:
-        labels.append(np.random.randint(0,clust_size,size=(n_points)))
-        dists = np.zeros((n_points,n_points))
-        for i in range(n_points):
-            for j in range(n_points):
-                if i == j: continue 
-                if labels[-1][i] == labels[-1][j]:
-                    dists[i,j] = np.random.normal(0,1e-5)
-                else:
-                    dists[i,j] = np.random.normal(0,1)
-        full_dists.append(dists)
-
-    from sklearn.manifold import MDS 
-    avg_dists = sum(full_dists, start=np.zeros_like(full_dists[0])) / len(full_dists)
-    X = MDS(n_components=100,dissimilarity="precomputed").fit_transform(avg_dists)
-    return full_dists, labels, X
 
 # @njit
 def inv_sq(embedding):
@@ -320,7 +223,10 @@ class ENSTSNE():
                 fixed = self.fixed
 
             if i % 200 == 0 and i > 0:
-                lr /= 2
+                lr /= 1
+                # self.X  = X.copy()
+                # self.vis_3d(f"slideshow/cluster/3d/{i}.png")
+                # self.vis_2d(f"slideshow/cluster/2d/{i}.png")                
 
 
             hist.append(enstsne_cost(P,self.joints,X))
@@ -350,9 +256,9 @@ class ENSTSNE():
             else: ax.scatter(x[:,0], x[:,1])
         if title: 
             plt.savefig(title)
-        # else: plt.show()
-        # plt.clf()
-        # plt.close(fig)
+        else: plt.show()
+        plt.clf()
+        plt.close(fig)
     
     def vis_3d(self,title=None):
         colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple"]
@@ -385,8 +291,18 @@ class ENSTSNE():
                     linewidth=4.5,
                     color='gray')        
 
-        plt.savefig(title)
+        # plt.savefig(title)
 
+        # plt.clf()
+        # plt.close(fig)
+        ax.set_xticks(ax.get_xticks(), [" " for _ in ax.get_xticks()])
+        ax.set_yticks(ax.get_yticks(), [" " for _ in ax.get_yticks()])                
+        ax.set_zticks(ax.get_zticks(), [" " for _ in ax.get_zticks()])
+
+        if title:
+            plt.savefig(title)
+        else:
+            plt.show()
         plt.clf()
         plt.close(fig)
 
@@ -404,7 +320,7 @@ def map_to_int(data: list[any]):
 from sklearn.metrics import pairwise_distances
 def load_clusters(n=100, dims= [5,6], n_clusters = [2,3]):
 
-    X, labels,subspaces = get_clusters(n,n_clusters,dims)
+    X, labels,subspaces = get_clusters(n,n_clusters,dims,random_state=np.random.randint(0,5000))
     
     dists = [pairwise_distances(x) for x in subspaces]
 
@@ -514,47 +430,30 @@ def load_food():
 
     return [pairwise_distances(x1), pairwise_distances(x2)], [y,y], np.concatenate([x1,x2], axis=1)
 
-def load_wine(a=[0,1,2],b=[3,4,5]):
-    import pandas as pd 
-    data = pd.read_csv("datasets/wine/winequality.csv")
-
-    x = data.to_numpy()
-
-    ind = np.random.choice(data.shape[0],3000)    
-    x = x[ind, :]
-
-    y1 = x[:, 11].copy()
-
-    x /= np.max(x,axis=0)
-    x1 = x[:,a]
-    x2 = x[:,b]
-
-    # _,y1 = np.unique(y1,return_inverse=True)
-    # y1 /= np.max(y1)
-    y2 = x[:, 12]
-
-    return [pairwise_distances(x1), pairwise_distances(x2)], [y1,y2], x
 
 
 
 
+from new_enstsne2 import get_clusters_distance
+from eval import vis_3d, vis_2d, vis_2d_per_proj
 if __name__ == "__main__":
+
     # dists, labels = load_fashion()
 
-    dists, labels, X = load_clusters(n=300, dims=[10,10], n_clusters=[4,3])
-    # dists, labels, X = load_wine()
-    
-    enstsne = ENSTSNE(dists,30,labels=labels)
-    enstsne.gd(1000)
-    vis_2d(enstsne.get_images(),labels,"test")
+    # dists, labels, X = get_clusters_distance(300,n_clusters=[2,3])
+    # dists, labels, X = load_clusters(400,dims=[160,110,100], n_clusters=[4,3,2])
+    # dists, labels, X = get_clusters_distance(400,[2,2,2],noise=0.3)
+    dists, labels, X = load_penguins()
+    # print(labels)
 
+    dists[1] = dists[1] + np.random.normal(0,1e-2,dists[1].shape)
 
-    from pyDRMetrics.pyDRMetrics import *
-    drm = DRMetrics(X,enstsne.get_embedding())
-    data = drm.get_json()
-    print(data)
-    print(type(data))
+    print(dists)
+    enstsne = ENSTSNE(dists,120,labels,fixed=True)
+    enstsne.gd(2000,0.5,50)
 
-    import json 
-    print(json.loads(data))
-    print(type(json.loads(data)))
+    enstsne.vis_3d()
+    # vis_3d(enstsne.get_embedding(),labels)
+    vis_2d(enstsne.get_images(), labels)
+    vis_2d_per_proj(enstsne.get_images(), labels)    
+    vis_3d(enstsne.get_embedding(), labels)

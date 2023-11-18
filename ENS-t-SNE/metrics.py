@@ -148,8 +148,8 @@ def updated_metrics_2d(embedding, high_d, labels):
     D_low = pairwise_distances(embedding)
 
     results = {
-        "continuity": metric_continuity(high_d, D_low, 5), 
-        "trustworthiness": metric_trustworthiness(high_d, D_low, 5),
+        "continuity": metric_continuity(high_d, D_low, 7), 
+        "trustworthiness": metric_trustworthiness(high_d, D_low, 7),
         "NH": metric_neighborhood_hit(embedding, labels, 7),
         "stress": stress(embedding,high_d)
     }
@@ -167,8 +167,8 @@ def updated_metrics_3d(embedding, high_d, labels):
     D_high = pairwise_distances(high_d)
 
     results = {
-        "continuity": metric_continuity(D_high, D_low, 5), 
-        "trustworthiness": metric_trustworthiness(D_high, D_low, 5),
+        "continuity": metric_continuity(D_high, D_low, 7), 
+        "trustworthiness": metric_trustworthiness(D_high, D_low, 7),
         "NH": metric_neighborhood_hit(embedding, y, 7),
         "stress": stress(embedding,D_high)
     }
