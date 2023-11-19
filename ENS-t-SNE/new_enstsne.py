@@ -4,6 +4,7 @@ import scipy
 import pylab as plt
 from tqdm import tqdm
 from numba import njit
+from sklearn.preprocessing import normalize
 
 MACHINE_EPSILON = 1e-15
 
@@ -215,6 +216,7 @@ class ENSTSNE():
             X -= lr * dx + momentum * change
             if not fixed: 
                 P = [p - ( lrp * newc) for p,newc in zip(P,dp)]
+                P = [ normalize(p,axis=1) for p in P]
 
             change = dx
             if i == 250: 
@@ -442,18 +444,18 @@ if __name__ == "__main__":
 
     # dists, labels, X = get_clusters_distance(300,n_clusters=[2,3])
     # dists, labels, X = load_clusters(400,dims=[160,110,100], n_clusters=[4,3,2])
-    # dists, labels, X = get_clusters_distance(400,[2,2,2],noise=0.3)
-    dists, labels, X = load_penguins()
+    dists, labels, X = get_clusters_distance(400,[4,3],noise=2)
+    # dists, labels, X = load_penguins()
     # print(labels)
 
-    dists[1] = dists[1] + np.random.normal(0,1e-2,dists[1].shape)
+    # dists[1] = dists[1] + np.random.normal(0,1,dists[1].shape)
 
     print(dists)
-    enstsne = ENSTSNE(dists,120,labels,fixed=True)
+    enstsne = ENSTSNE(dists,80,labels,fixed=False)
     enstsne.gd(2000,0.5,50)
 
     enstsne.vis_3d()
     # vis_3d(enstsne.get_embedding(),labels)
     vis_2d(enstsne.get_images(), labels)
-    vis_2d_per_proj(enstsne.get_images(), labels)    
+    vis_2d_per_proj(enstsne.get_images(), labels)
     vis_3d(enstsne.get_embedding(), labels)

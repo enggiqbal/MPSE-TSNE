@@ -94,8 +94,8 @@ def vis_2d_per_proj(data,labels,title=None):
     for X in data:
         plt.clf()
         fig, ax = plt.subplots()
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
+        ax.set_xticks([])
+        ax.set_yticks([])
         for i in range(num_clusts[0] + 1):
             for j in range(num_clusts[1] + 1):
                 for k in range(num_clusts[2] + 1):

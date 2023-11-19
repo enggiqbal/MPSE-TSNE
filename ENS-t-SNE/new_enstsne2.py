@@ -103,6 +103,7 @@ def get_clusters_distance(n_points, n_clusters=[2], noise=0.1):
     labels = list()
     for clust_size in n_clusters:
         labels.append(np.random.randint(0,clust_size,size=(n_points)))
+        print(labels[-1])
         dists = np.zeros((n_points,n_points))
         for i in range(n_points):
             for j in range(n_points):
@@ -110,7 +111,7 @@ def get_clusters_distance(n_points, n_clusters=[2], noise=0.1):
                 if labels[-1][i] == labels[-1][j]:
                     dists[i,j] = abs(np.random.normal(1,noise))
                 else:
-                    dists[i,j] = abs(np.random.normal(2,noise))
+                    dists[i,j] = abs(np.random.normal(4,noise))
         dists = dists + dists.T
         full_dists.append(dists)
 
